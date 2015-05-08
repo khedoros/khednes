@@ -1,0 +1,36 @@
+//ROM constants
+#define NM_INT_INSERTION 0xFFFA
+#define RST_INT_INSERTION 0xFFFC
+#define IRQ_INT_INSERTION 0xFFFE
+#define HEADER_SIZE 16
+#define PRG_PAGE_SIZE 16384
+#define CHR_PAGE_SIZE 8192
+#define MAP_OFFSET        0x8000
+#define VERT 0
+#define HORIZ 1
+#define FOUR_SCR 2
+#define MIN_FILE_SIZE HEADER_SIZE + PRG_PAGE_SIZE
+
+#define BG_CHANGE_ADDR 0x20004
+#define SPR_CHANGE_ADDR 0x20003
+
+//PPU constants
+#define CLK_PER_LINE 341
+#define CLK_PER_FRAME 89342
+#define LINE_PER_FRAME 262
+#define VINT_LINES 20
+#define PRE_RENDER_LINES 1
+#define POST_RENDER_LINES 1
+#define RENDER_LINES 240
+
+#define NT0_OFFSET 0x000
+#define NT1_OFFSET 0x400
+#define NT2_OFFSET 0x800
+#define NT3_OFFSET 0xC00
+
+#define AT0_OFFSET 0x3C0
+#define AT1_OFFSET 0x7C0
+#define AT2_OFFSET 0xBC0
+#define AT3_OFFSET 0xFC0
+
+#define NES_TRANSPARENT 74
