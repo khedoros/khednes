@@ -25,6 +25,7 @@ public:
         };
 
         cpu(mem * data, apu * ap, const unsigned int start_loc);
+        ~cpu();
         const int run_next_op();
         const int run_ops();
         void trigger_nmi();

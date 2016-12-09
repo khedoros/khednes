@@ -34,6 +34,10 @@ private:
     unsigned int frame;
     bool joy1_strobe;
     int joy1_bit;
+    int joy2_bit;
+    int joy2_trigger;
+    int joy2_light;
     std::bitset<8> joy1_buttons;
+    std::bitset<8> joy2_buttons;
 };
 #endif

@@ -84,6 +84,12 @@ void mem::sendkeydown(SDL_Scancode test) {
                 case SDL_SCANCODE_GRAVE:
                         pu.speedup(true);
                         break;
+                case SDL_SCANCODE_X:
+                        joy2_trigger=16;
+                        break;
+                case SDL_SCANCODE_Z:
+                        joy2_light=8;
+                        break;
                 default: cout<<"Saw button "<<int(test)<<endl;
         }        
 }
@@ -117,6 +123,12 @@ void mem::sendkeyup(SDL_Scancode test) {
                         break;
                 case SDL_SCANCODE_GRAVE:
                         pu.speedup(false);
+                        break;
+                case SDL_SCANCODE_X:
+                        joy2_trigger=0;
+                        break;
+                case SDL_SCANCODE_Z:
+                        joy2_light=0;
                         break;
                 default: //don't really care about the rest of the values =)
                         break;
@@ -159,6 +171,17 @@ const unsigned int mem::read(unsigned int address) {
                 return 0;
         }
         else if(address==0x4017) {
+                if(joy1_strobe) {
+                    return joy2_buttons[0];
+                }
+                else if(joy2_bit<8) {
+                    int retval=(joy2_buttons[joy2_bit])?1:0;
+                    joy2_bit++;
+                    return retval|joy2_trigger|joy2_light;
+                }
+                else {
+                    return 1|joy2_trigger|joy2_light;
+                }
                 return 0;
         }
         else if(address>=0x6000&&address<=0x7fff) {

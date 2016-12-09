@@ -181,9 +181,26 @@ int main() {
         return 1;
     std::list<unsigned int> addrs;
     std::vector<bool> visited(0x8000,false);
-    addrs.push_back(game.get_rst_addr());
-    addrs.push_back(game.get_nmi_addr());
-    addrs.push_back(game.get_irq_addr());
+    ifstream addr_file("addresses");
+    if(addr_file.is_open()) {
+        int addr_inp = 0;
+        int addr_count = 0;
+        addr_file>>setbase(16);
+        cout<<hex;
+        while(!addr_file.eof()) {
+            addr_file>>addr_inp;
+            addr_count++;
+            //cout<<addr_inp<<endl;
+            addrs.push_back(addr_inp);
+        }
+        cout<<"Took input of "<<dec<<addr_count<<" addresses from the file."<<endl;
+    }
+    else {
+        addrs.push_back(game.get_rst_addr());
+        addrs.push_back(game.get_nmi_addr());
+        addrs.push_back(game.get_irq_addr());
+    }
+
     while(addrs.size() > 0) {
         unsigned int addr = addrs.front();
         addrs.pop_front();
@@ -203,8 +220,14 @@ int main() {
         }
         //cout<<endl;
     }
-    for(int i=0;i<visited.size();++i)
-        if(visited[i]) print_inst(game,i+0x8000);
+    int visited_addrs = 0;
+    for(int i=0x4000;i<visited.size();++i) {
+        if(visited[i]) {
+            print_inst(game,i+0x8000);
+            visited_addrs++;
+        }
         else cout<<hex<<i+0x8000<<"\t"<<game.get_pbyte(i+0x8000)<<endl;
+    }
+    cout<<dec<<"Visited "<<visited_addrs<<" addresses after searching the conditionals"<<endl;
     return 0;
 }

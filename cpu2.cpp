@@ -43,8 +43,11 @@ cpu::cpu(mem * data, apu * ap, const unsigned int start_loc) {
     zp_xc = zp_yc = ind_xc = ind_yc = zpc = immediatec = absac = relativec = absa_yc = absa_xc = indc = impc = accumc = 0;
 }
 
+
+bool addresses[0x10000] {false};
+
 void cpu::print_details() {
-    return;
+    //return;
     int total=0;
     int count=0;
 
@@ -57,6 +60,19 @@ void cpu::print_details() {
     }
     printf("Total of %d instructions invoked a total of %d times.\n",count,total);
 
+    int addr_count = 0;
+    for(int i=0;i<0x10000;++i) {
+        if(addresses[i]) {
+            printf("%04X\n",i);
+            addr_count++;
+        }
+    }
+    cout<<"The code visited "<<dec<<addr_count<<" addresses during execution."<<endl;
+}
+
+
+cpu::~cpu() {
+    print_details();
 }
 
                                 //      0 1 2 3  4 5 6 7  8 9 a b  c d e f
@@ -195,7 +211,7 @@ inline int cpu::ind() {
     int lo,hi;
     hi=memory->read(pc+1);
     lo=memory->read(pc+2);
-    snprintf(raw_op,12," %02x %02x IND ",hi,lo);
+    //snprintf(raw_op,12," %02x %02x IND ",hi,lo);
     #endif
     int addr=memory->read2(pc+1);
     ++indc;
@@ -755,7 +771,9 @@ const int cpu::run_next_op() {
     oldy=y;
     oldsp=sp;
     oldstatus=status;
+    addresses[pc] = true;
     //snprintf(op_addr,9,"%04x: %02x",pc,nextop);
+    assem_op[0] = 0;
     switch(nextop) {
     case 0x00://BRK
         imp();
@@ -1443,7 +1461,9 @@ const int cpu::run_next_op() {
     }
     nextopoffset = offset;
     nextoparg = addr;
-    util::debug(ORIGIN,"%s%s%s  acc: %02x x: %02x y: %02x sp: %02x status: %s\n",op_addr,raw_op,assem_op,oldacc,oldx,oldy,oldsp,stat_string(oldstatus));
+    if(0 && strlen(assem_op))
+        util::debug(ORIGIN,"%s%s%s  acc: %02x x: %02x y: %02x sp: %02x status: %s\n",op_addr,raw_op,assem_op,oldacc,oldx,oldy,oldsp,stat_string(oldstatus));
+
     //audio->clock_cpu(runtime[nextop]+extra_time);
     return runtime[nextop]+extra_time;
 }
