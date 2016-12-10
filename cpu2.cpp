@@ -772,6 +772,7 @@ const int cpu::run_next_op() {
     oldsp=sp;
     oldstatus=status;
     addresses[pc] = true;
+    cout<<hex<<pc<<endl;
     //snprintf(op_addr,9,"%04x: %02x",pc,nextop);
     assem_op[0] = 0;
     switch(nextop) {

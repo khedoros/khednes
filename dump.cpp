@@ -136,13 +136,15 @@ void print_inst(rom& game, const unsigned int addr) {
     }
 }
 
+//Default to calculating the next address
 unsigned int successor(rom& game, const unsigned int addr) {
     int op = game.get_pbyte(addr);
     if(inst_type[op] == none) return 0;
     switch(op) {
         case 0x00: return addr+2; //BRK
         case 0x4c: return game.get_pword(addr+1); //ABS JMP
-        case 0x40:                                     //RTI       \
+        case 0x20:                                     //JSR       \ - Sometimes modifies the return address on the stack
+        case 0x40:                                     //RTI       |
         case 0x60:                                     //RTS       |----hard to predict
         case 0x6c:                                     //IND JMP   /
                    return 0;
