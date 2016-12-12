@@ -258,6 +258,12 @@ int main(int argc, char ** argv) {
                 break;
             case SDL_MOUSEMOTION:
                 break;
+            case SDL_MOUSEBUTTONDOWN:
+                memi.sendmousedown(event.button.x,event.button.y);
+                break;
+            case SDL_MOUSEBUTTONUP:
+                memi.sendmouseup(event.button.x,event.button.y);
+                break;
             //case SDL_VIDEORESIZE:
             case SDL_WINDOWEVENT:
                 switch(event.window.event) {

@@ -194,6 +194,19 @@ int main() {
             addr_count++;
             //cout<<addr_inp<<endl;
             addrs.push_back(addr_inp);
+
+            //Found these in function jump tables, but didn't see them in my disassembly
+            addrs.push_back(0xcc1f);
+            addrs.push_back(0xcc3d);
+            addrs.push_back(0xcc4f);
+            addrs.push_back(0xcc7c);
+            addrs.push_back(0xd33d);
+            addrs.push_back(0xd3c9);
+            addrs.push_back(0xd5d2);
+            addrs.push_back(0xd752);
+            addrs.push_back(0xd78f);
+            addrs.push_back(0xd7c5);
+
         }
         cout<<"Took input of "<<dec<<addr_count<<" addresses from the file."<<endl;
     }

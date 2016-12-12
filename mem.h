@@ -22,6 +22,8 @@ public:
     const unsigned int get_irq_addr();
     void sendkeydown(SDL_Scancode test);
     void sendkeyup(SDL_Scancode test);
+    void sendmousedown(int x, int y);
+    void sendmouseup(int x, int y);
     const unsigned int get_ppu_cycles(const unsigned int frame);
 
 private:

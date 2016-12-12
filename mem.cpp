@@ -135,6 +135,14 @@ void mem::sendkeyup(SDL_Scancode test) {
         }
 }
 
+void mem::sendmouseup(int x, int y) {
+    cout<<"Mouse up at "<<dec<<x<<", "<<y<<endl;
+}
+
+void mem::sendmousedown(int x,int y) {
+    cout<<"Mouse down at "<<dec<<x<<", "<<y<<endl;
+}
+
 const unsigned int mem::read(unsigned int address) {
         address&=0xFFFF;
         if(address<=0x1FFF) { 
