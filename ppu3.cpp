@@ -791,3 +791,7 @@ void ppu::apply_updates_to(int curcycle) {
     int mode_count = changes.set_horiz + changes.set_vert + changes.set_4_scr;
     if(mode_count > 1) cout<<"Multiple mirroring modes set during one vertical tile of time!"<<endl; 
 }
+
+uint32_t ppu::get_buffer_color(int x, int y) {
+    return screen.get_color(x,y);
+}

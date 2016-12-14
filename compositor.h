@@ -44,6 +44,6 @@ public:
     SDL_Palette * get_palette();
     void erase_nt(int x,int y);
     void add_nt_area(int sx, int sy, int ex, int ey);
-
+    uint32_t get_color(int x, int y);
 };
 

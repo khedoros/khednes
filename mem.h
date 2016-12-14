@@ -24,6 +24,7 @@ public:
     void sendkeyup(SDL_Scancode test);
     void sendmousedown(int x, int y);
     void sendmouseup(int x, int y);
+    void sendmousepos(int x, int y);
     const unsigned int get_ppu_cycles(const unsigned int frame);
 
 private:
@@ -39,6 +40,8 @@ private:
     int joy2_bit;
     int joy2_trigger;
     int joy2_light;
+    int mouse_x;
+    int mouse_y;
     std::bitset<8> joy1_buttons;
     std::bitset<8> joy2_buttons;
 };

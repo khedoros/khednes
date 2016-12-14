@@ -232,5 +232,6 @@ public:
         void toggle_table_view();
         void resize(int x, int y);
         void speedup(bool up);
+        uint32_t get_buffer_color(int x, int y);
 
 };

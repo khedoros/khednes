@@ -373,7 +373,7 @@ void apu::clock_every() {
         }
     }
     dmc_pcm_data = accum/samples;
-    cout<<"Final data: "<<dmc_pcm_data<<endl;
+    //cout<<"Final data: "<<dmc_pcm_data<<endl;
 }
 
 void apu::gen_audio(uint16_t to_gen) { //To be run once per frame, to generate audio

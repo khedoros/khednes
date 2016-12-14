@@ -4,7 +4,7 @@
 #define ORIGIN 3
 using namespace std;
 
-mem::mem(rom &romi, ppu &ppui,apu &apui) : cart(romi), pu(ppui), snd(apui), cycle(0) {
+mem::mem(rom &romi, ppu &ppui,apu &apui) : cart(romi), pu(ppui), snd(apui), cycle(0), mouse_x(0), mouse_y(0) {
     ram.resize(0x800);
     sram.resize(0x2000);
     for(int i=0;i<8;i++) {
@@ -135,12 +135,20 @@ void mem::sendkeyup(SDL_Scancode test) {
         }
 }
 
+void mem::sendmousepos(int x, int y) {
+    mouse_x = x;
+    mouse_y = y;
+}
+
 void mem::sendmouseup(int x, int y) {
     cout<<"Mouse up at "<<dec<<x<<", "<<y<<endl;
+    joy2_trigger = 0;
 }
 
 void mem::sendmousedown(int x,int y) {
     cout<<"Mouse down at "<<dec<<x<<", "<<y<<endl;
+    //cout<<"Color: "<<hex<<pu.get_buffer_color(x,y)<<endl;
+    joy2_trigger = 16;
 }
 
 const unsigned int mem::read(unsigned int address) {
@@ -179,6 +187,17 @@ const unsigned int mem::read(unsigned int address) {
                 return 0;
         }
         else if(address==0x4017) {
+                uint32_t color = pu.get_buffer_color(mouse_x, mouse_y);
+                color |= pu.get_buffer_color(mouse_x+5, mouse_y+5);
+                color |= pu.get_buffer_color(mouse_x+5, mouse_y-5);
+                color |= pu.get_buffer_color(mouse_x-5, mouse_y+5);
+                color |= pu.get_buffer_color(mouse_x-5, mouse_y-5);
+                uint8_t r = color>>(16);
+                uint8_t g = (color&0xFF00)>>(8);
+                uint8_t b = (color&0xFF);
+                if(r > 0x80 || g > 0x80 || b > 0x80) joy2_light = 8;
+                else                                 joy2_light = 0;
+                //cout<<"joy2_light: "<<((joy2_light)?"yes":"no")<<endl;
                 if(joy1_strobe) {
                     return joy2_buttons[0];
                 }

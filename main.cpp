@@ -258,6 +258,7 @@ int main(int argc, char ** argv) {
                 memi.sendkeyup(event.key.keysym.scancode);
                 break;
             case SDL_MOUSEMOTION:
+                memi.sendmousepos(event.motion.x, event.motion.y);
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 memi.sendmousedown(event.button.x,event.button.y);
