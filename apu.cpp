@@ -329,21 +329,31 @@ void apu::clock_every() {
         return;
     }
 
-    //WHY cut c_p_s to 1/3? Honestly, no idea. No division: super high-pitched, so I played around until I found the best-sounding option.
+    //CLK_PER_FRAME is the *pixel clock* which runs 3x faster than the CPU clock, which is where the *3 comes from.
     const int clocks_per_sample = int(double(CLK_PER_FRAME) / double(SAMPLES_PER_FRAME * 3));
-    //cout<<"dmc_addr: "<<dmc_addr<<"\tdmc_bit: "<<dmc_bit<<"\tdmc_freq_cnt: "<<dmc_freq_cnt<<endl;
-    int accum = 0;
-    for(int clock = 0; clock < clocks_per_sample; ++clock) {
-        int increment = ((dmc_cur_byte & (1<<(dmc_bit))) > 0)?1:-1;
-        dmc_pcm_data += increment;
+    int accum = 0;       //Generating either 1 or 2 samples, so this is where I'm collecting them
+    int samples = 0;     //Number of samples generated, so that I can divide accum by the right number
 
+    //"clock" represents a CPU clock. The goal is to generate samples faster than incrementing/decrementing the PCM value by 1 at a time
+    for(int clock = 0; clock < clocks_per_sample;) {
+        samples++;
+        int sign = ((dmc_cur_byte & (1<<(dmc_bit))) > 0)?2:-2;
+
+        //Either run up to the wavelength count, or the number of CPU cycles we need to simulate, whichever is less
+        //If we still need to simulate more cycles, that'll happen in the next loop iteration.
+        int increment = (dmc_freq_cnt > (clocks_per_sample - clock)) ? (clocks_per_sample - clock) : dmc_freq_cnt;
+        dmc_pcm_data += (increment*sign);
+
+        //The PCM data doesn't wrap like an X86 register, it "saturates" to stay in the range [0,127]
         if(dmc_pcm_data < 0) dmc_pcm_data = 0;
         else if(dmc_pcm_data > 127) dmc_pcm_data = 127;
 
-        //cout<<"bit "<<dmc_bit<<" in byte "<<dmc_addr<<"/"<<dmc_addr_reset+dmc_length<<" = "<<dmc_pcm_data<<endl;
         accum +=dmc_pcm_data;
 
-        dmc_freq_cnt--;
+        dmc_freq_cnt-=increment;
+        clock += increment;
+
+        //Clock the DMC registers if we're at the end of the wavelength counter
         if(!dmc_freq_cnt) {
             dmc_freq_cnt = dmc_freq;
             dmc_bit++;
@@ -362,8 +372,8 @@ void apu::clock_every() {
             }
         }
     }
-    dmc_pcm_data = accum/clocks_per_sample;
-    //cout<<"Final data: "<<dmc_pcm_data<<endl;
+    dmc_pcm_data = accum/samples;
+    cout<<"Final data: "<<dmc_pcm_data<<endl;
 }
 
 void apu::gen_audio(uint16_t to_gen) { //To be run once per frame, to generate audio

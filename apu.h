@@ -226,18 +226,18 @@ Note that these conditions pertain regardless of any sweep refresh rate values, 
 
 
     //4010, 4011, 4012, 4013, 4015
-    int dmc_freq_table[16]; //Actually wavelengths, basically
-    int dmc_pcm_data;    //Current value for PCM data coming from the DMC
-    int dmc_addr;        //Address for sfx data
-    int dmc_addr_reset;  //Address to reset to, for looping
-    int dmc_freq_cnt;    //Frequency countdown
-    int dmc_freq;        //Frequency reset
-    bool dmc_gen_irq;    //Generate IRQ when the sound ends?
-    bool dmc_loop;       //Loop the effect when it ends?
-    int dmc_length;      //Byte length of the sfx
-    int dmc_bit;
-    int dmc_cur_byte;
+    int dmc_freq_table[16]; //Actually wavelengths, in terms of clock cycles to pass between clocking the DMC hardware for the next bit of data
+    int dmc_pcm_data;       //Current value for PCM data coming from the DMC's DAC
+    int dmc_addr;           //Address for sfx data
+    int dmc_addr_reset;     //Address to reset to, for looping
+    int dmc_freq_cnt;       //Wavelength counter
+    int dmc_freq;           //Reset value for the wavelength counter
+    bool dmc_gen_irq;       //Generate IRQ when the sound ends? (not implemented, but the emulator prints a warning about it)
+    bool dmc_loop;          //Loop the effect when it ends? (not tested, but should work ;-) )
+    int dmc_length;         //Byte length of the sfx
+    int dmc_bit;            //Current bit selected for an increment value
+    int dmc_cur_byte;       //Place to store the current byte when I fetch it from the CPU memory map
 
-    int frame;
+    int frame;              //Keeps track of the current video frame so that I process register writes at the right time
 };
 
