@@ -1,5 +1,4 @@
-#ifndef MAPPER_002_H
-#define MAPPER_002_H
+#pragma once
 #include "rom.h"
 #include "mapper.h"
 
@@ -16,4 +15,3 @@ private:
     unsigned int prg_lo_offset;
     unsigned int prg_hi_offset;
 };
-#endif

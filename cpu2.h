@@ -1,6 +1,4 @@
-#ifndef CPU_H
-#define CPU_H
-
+#pragma once
 #include "mem.h"
 #include "apu.h"
 #include <string>
@@ -179,4 +177,3 @@ private:
         const static int FLAG_VERFLOW=0x40;
         const static int FLAG_SIGN=0x80;
 };
-#endif

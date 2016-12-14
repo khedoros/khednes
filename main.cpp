@@ -151,6 +151,7 @@ int main(int argc, char ** argv) {
     apu apui;
     //cout<<"APU started. Going to bring up memory map"<<endl;
     mem memi(cart,ppui,apui);
+    apui.setmem(&memi);
     //cout<<"Memory started. Going to start CPU"<<endl;
     cpu cpui(&memi,&apui,memi.get_rst_addr());
     //cout<<"CPU started."<<endl;

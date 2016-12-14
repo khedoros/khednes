@@ -1,5 +1,4 @@
-#ifndef UTIL_H
-#define UTIL_H
+#pragma once
 #include<stdio.h>
 #include<stdarg.h>
 #include<vector>
@@ -34,4 +33,3 @@ private:
     static bool init;
 };
 
-#endif

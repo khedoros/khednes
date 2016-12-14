@@ -1,5 +1,4 @@
-#ifndef MAPPER_001_H
-#define MAPPER_001_H
+#pragma once
 #include "rom.h"
 #include "mapper.h"
 
@@ -69,4 +68,3 @@ private:
     unsigned int chr_lo_offset;
     unsigned int chr_hi_offset;
 };
-#endif

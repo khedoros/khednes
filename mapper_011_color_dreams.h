@@ -1,5 +1,4 @@
-#ifndef MAPPER_011_H
-#define MAPPER_011_H
+#pragma once
 #include "rom.h"
 
 //Implements Mapper #0 (aka "No mapper"), and provides the base class for other, more complex mappers.
@@ -31,4 +30,3 @@ private:
     unsigned int chr_lo_offset;
     unsigned int chr_hi_offset;   
 };
-#endif

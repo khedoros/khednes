@@ -1,11 +1,11 @@
-#ifndef MEM_H
-#define MEM_H
-
+#pragma once
 #include "rom.h"
 #include "ppu3.h"
 #include "apu.h"
 #include "util.h"
 #include<string>
+
+class apu;
 
 class mem {
 
@@ -42,4 +42,3 @@ private:
     std::bitset<8> joy1_buttons;
     std::bitset<8> joy2_buttons;
 };
-#endif

@@ -1,5 +1,4 @@
-#ifndef ROM_H
-#define ROM_H
+#pragma once
 #include<fstream>
 #include<iostream>
 #include<list>
@@ -90,4 +89,3 @@ private:
         unsigned int chr_lo_offset;
         unsigned int chr_hi_offset;
 };
-#endif

@@ -63,16 +63,15 @@ void cpu::print_details() {
     int addr_count = 0;
     for(int i=0;i<0x10000;++i) {
         if(addresses[i]) {
-            printf("%04X\n",i);
+            //printf("%04X\n",i);
             addr_count++;
         }
     }
-    cout<<"The code visited "<<dec<<addr_count<<" addresses during execution."<<endl;
+    //cout<<"The code visited "<<dec<<addr_count<<" addresses during execution."<<endl;
 }
 
 
 cpu::~cpu() {
-    print_details();
 }
 
                                 //      0 1 2 3  4 5 6 7  8 9 a b  c d e f
@@ -772,7 +771,7 @@ const int cpu::run_next_op() {
     oldsp=sp;
     oldstatus=status;
     addresses[pc] = true;
-    cout<<hex<<pc<<endl;
+    //cout<<hex<<pc<<endl;
     //snprintf(op_addr,9,"%04x: %02x",pc,nextop);
     assem_op[0] = 0;
     switch(nextop) {

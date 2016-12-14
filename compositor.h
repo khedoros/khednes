@@ -1,6 +1,4 @@
-#ifndef CRT_DISPLAY_H
-#define CRT_DISPLAY_H
-
+#pragma once
 #include "SDL2/SDL.h"
 #include <assert.h>
 #include <iostream>
@@ -49,5 +47,3 @@ public:
 
 };
 
-#else
-#endif

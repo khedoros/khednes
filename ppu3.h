@@ -1,6 +1,4 @@
-#ifndef PPU3_H
-#define PPU3_H
-
+#pragma once
 #include "rom.h"
 #include "util.h"
 #include "SDL2/SDL.h"
@@ -236,4 +234,3 @@ public:
         void speedup(bool up);
 
 };
-#endif

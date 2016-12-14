@@ -241,8 +241,7 @@ void mem::write(unsigned int address, unsigned char val) {
         }
         else if((address>=0x4000&&address<0x4014)||address==0x4015||address==0x4017) {
                 //util::debug(ORIGIN,"TODO: unimplemented audio stuff.\n");
-        snd.reg_write(frame, cycle, address,val);
-                //sndout.write_reg();
+                snd.reg_write(frame, cycle, address,val);
         }
         else if(address==0x4016) {
                 //util::debug(ORIGIN,"TODO: unimplemented joypad handling.\n");

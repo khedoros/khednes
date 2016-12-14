@@ -1,5 +1,4 @@
-#ifndef MAPPER_H
-#define MAPPER_H
+#pragma once
 #include "rom.h"
 
 //Implements Mapper #0 (aka "No mapper"), and provides the base class for other, more complex mappers.
@@ -20,4 +19,3 @@ public:
 protected:
     rom * cart;
 };
-#endif
