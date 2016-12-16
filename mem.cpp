@@ -141,12 +141,12 @@ void mem::sendmousepos(int x, int y) {
 }
 
 void mem::sendmouseup(int x, int y) {
-    cout<<"Mouse up at "<<dec<<x<<", "<<y<<endl;
+    //cout<<"Mouse up at "<<dec<<x<<", "<<y<<endl;
     joy2_trigger = 0;
 }
 
 void mem::sendmousedown(int x,int y) {
-    cout<<"Mouse down at "<<dec<<x<<", "<<y<<endl;
+    //cout<<"Mouse down at "<<dec<<x<<", "<<y<<endl;
     //cout<<"Color: "<<hex<<pu.get_buffer_color(x,y)<<endl;
     joy2_trigger = 16;
 }

@@ -143,7 +143,7 @@ unsigned int successor(rom& game, const unsigned int addr) {
     switch(op) {
         case 0x00: return addr+2; //BRK
         case 0x4c: return game.get_pword(addr+1); //ABS JMP
-        case 0x20:                                     //JSR       \ - Sometimes modifies the return address on the stack
+        //case 0x20:                                     //JSR       \ - Sometimes modifies the return address on the stack
         case 0x40:                                     //RTI       |
         case 0x60:                                     //RTS       |----hard to predict
         case 0x6c:                                     //IND JMP   /
@@ -206,6 +206,22 @@ int main() {
             addrs.push_back(0xd752);
             addrs.push_back(0xd78f);
             addrs.push_back(0xd7c5);
+
+            addrs.push_back(0xda21);
+            addrs.push_back(0xda2e);
+            addrs.push_back(0xda38);
+            addrs.push_back(0xda40);
+            addrs.push_back(0xda45);
+            addrs.push_back(0xda4d);
+            addrs.push_back(0xda57);
+            addrs.push_back(0xda61);
+            addrs.push_back(0xda6c);
+            addrs.push_back(0xda75);
+            addrs.push_back(0xda7d);
+            addrs.push_back(0xda85);
+            addrs.push_back(0xda90);
+            addrs.push_back(0xda9a);
+
 
         }
         cout<<"Took input of "<<dec<<addr_count<<" addresses from the file."<<endl;

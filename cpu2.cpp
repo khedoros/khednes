@@ -47,7 +47,7 @@ cpu::cpu(mem * data, apu * ap, const unsigned int start_loc) {
 bool addresses[0x10000] {false};
 
 void cpu::print_details() {
-    //return;
+    return;
     int total=0;
     int count=0;
 
@@ -63,11 +63,11 @@ void cpu::print_details() {
     int addr_count = 0;
     for(int i=0;i<0x10000;++i) {
         if(addresses[i]) {
-            //printf("%04X\n",i);
+            printf("%04X\n",i);
             addr_count++;
         }
     }
-    //cout<<"The code visited "<<dec<<addr_count<<" addresses during execution."<<endl;
+    cout<<"The code visited "<<dec<<addr_count<<" addresses during execution."<<endl;
 }
 
 

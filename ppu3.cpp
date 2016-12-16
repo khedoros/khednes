@@ -516,6 +516,23 @@ int ppu::calc() {
                 }
             }
         }
+
+        for(int table = 0; table < 2; table++) {
+            for(int tile_y = 0; tile_y < 16; tile_y++) {
+                for(int tile_x = 0; tile_x < 16; tile_x++) {
+                    for(int j=0;j<8;++j) {
+                        for(int i=0;i<8;++i) {
+                            int x = 768+tile_x*8+i;
+                            int y = table*128+tile_y*8+j;
+                            int col = get_color(table*256+tile_y*16+tile_x,i,j);
+                            int map[] = {74, 64, 67, 71};
+                            col = map[col];
+                            screen.pset(x, y, col);
+                        }
+                    }
+                }
+            }
+        }
     }
     else if(control1.bits.show_bg) { //Normal game render
 
