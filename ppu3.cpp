@@ -812,3 +812,24 @@ void ppu::apply_updates_to(int curcycle) {
 uint32_t ppu::get_buffer_color(int x, int y) {
     return screen.get_color(x,y);
 }
+
+void ppu::print_name_table() {
+    bool vars[256] = {false};
+    for(int big_y=0;big_y<1;++big_y) {
+        for(int tile_y=0;tile_y<32;++tile_y) {
+            for(int big_x=0;big_x<1;++big_x) {
+                for(int tile_x=0;tile_x<32;++tile_x) {
+                    printf("%02x ", name_table[tile_x+32*tile_y+1024*big_x+2048*big_y]);
+                    if(tile_y < 30) {
+                        vars[name_table[tile_x+32*tile_y+1024*big_x+2048*big_y]] = true;
+                    }
+                }
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+    printf("Contains these values: ");
+    for(int i=0;i<256;++i) if(vars[i]) printf("%02x ", i);
+    printf("\n");
+}

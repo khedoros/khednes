@@ -90,6 +90,9 @@ void mem::sendkeydown(SDL_Scancode test) {
                 case SDL_SCANCODE_Z:
                         joy2_light=8;
                         break;
+                case SDL_SCANCODE_N:
+                        pu.print_name_table();
+                        break;
                 default: cout<<"Saw button "<<int(test)<<endl;
         }        
 }
