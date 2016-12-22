@@ -10,6 +10,7 @@ class mapper_001;
 class mapper_002;
 class mapper_003;
 class mapper_011;
+class mapper_nsf;
 
 class rom {
 friend mapper;
@@ -17,12 +18,15 @@ friend mapper_001;
 friend mapper_002;
 friend mapper_003;
 friend mapper_011;
+friend mapper_nsf;
 
 public:
         rom(std::string filename, int mapper);
         ~rom();
         bool isValid();
+        bool isNSF();
         void print_info();
+        void print_nsf_info();
         const unsigned int get_rst_addr();
         const unsigned int get_nmi_addr();
         const unsigned int get_irq_addr();
@@ -60,6 +64,8 @@ public:
 private:
 
         bool load(std::string& filename);
+        bool load_nsf(std::string& filename);
+
         int mapper_guess();
         mapper *map;
 
@@ -88,4 +94,14 @@ private:
         unsigned int prg_hi_offset;
         unsigned int chr_lo_offset;
         unsigned int chr_hi_offset;
+
+        //NSF-specific values
+        int load_addr;
+        unsigned int song_count;
+        unsigned int song_index;
+        unsigned int ntsc_ticks;
+        unsigned int pal_ticks;
+        bool pal;
+        bool ntsc;
+        bool nsf;
 };

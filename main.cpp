@@ -153,7 +153,7 @@ int main(int argc, char ** argv) {
     mem memi(cart,ppui,apui);
     apui.setmem(&memi);
     //cout<<"Memory started. Going to start CPU"<<endl;
-    cpu cpui(&memi,&apui,memi.get_rst_addr());
+    cpu cpui(&memi,&apui,memi.get_rst_addr(), cart.isNSF());
     //cout<<"CPU started."<<endl;
     bool paused=false;
     //int time_stop;
