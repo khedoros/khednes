@@ -88,7 +88,7 @@ void mem::sendkeydown(SDL_Scancode test) {
                         joy2_trigger=16;
                         break;
                 case SDL_SCANCODE_Z:
-                        joy2_light=8;
+                        joy2_light=0;
                         break;
                 case SDL_SCANCODE_N:
                         pu.print_name_table();
@@ -131,7 +131,7 @@ void mem::sendkeyup(SDL_Scancode test) {
                         joy2_trigger=0;
                         break;
                 case SDL_SCANCODE_Z:
-                        joy2_light=0;
+                        joy2_light=8;
                         break;
                 default: //don't really care about the rest of the values =)
                         break;
@@ -195,11 +195,15 @@ const unsigned int mem::read(unsigned int address) {
                 color |= pu.get_buffer_color(mouse_x+5, mouse_y-5);
                 color |= pu.get_buffer_color(mouse_x-5, mouse_y+5);
                 color |= pu.get_buffer_color(mouse_x-5, mouse_y-5);
+                color |= pu.get_buffer_color(mouse_x, mouse_y+5);
+                color |= pu.get_buffer_color(mouse_x, mouse_y-5);
+                color |= pu.get_buffer_color(mouse_x-5, mouse_y);
+                color |= pu.get_buffer_color(mouse_x-5, mouse_y);
                 uint8_t r = color>>(16);
                 uint8_t g = (color&0xFF00)>>(8);
                 uint8_t b = (color&0xFF);
-                if(r > 0x80 || g > 0x80 || b > 0x80) joy2_light = 8;
-                else                                 joy2_light = 0;
+                if(r > 0x80 || g > 0x80 || b > 0x80) joy2_light = 0;
+                else                                 joy2_light = 8;
                 //cout<<"joy2_light: "<<((joy2_light)?"yes":"no")<<endl;
                 if(joy1_strobe) {
                     return joy2_buttons[0];
