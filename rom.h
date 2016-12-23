@@ -108,4 +108,5 @@ private:
         bool pal;
         bool ntsc;
         bool nsf;
+        bool uses_banks;
 };

@@ -15,7 +15,7 @@ void cpu::debug_dummy(const char *,...) {
     return;
 }
 
-cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf) {
+cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf), rec_depth(0) {
     for(int i=0;i<256;++i) {
         inst_counts[i]=0;
     }
@@ -134,7 +134,7 @@ inline int cpu::zp_x() {
     pc+=2;
     ++zp_xc;
     int base_addr=memory->read(pc-1);
-    //snprintf(raw_op,12," %02x    ZPX ",base_addr);
+    snprintf(raw_op,12," %02x    ZPX ",base_addr);
     return (base_addr+x)&0xFF;
 }
 
@@ -142,13 +142,13 @@ inline int cpu::zp_y() {
     pc+=2;
     ++zp_yc;
     int base_addr=memory->read(pc-1);
-    //snprintf(raw_op,12," %02x    ZPY ",base_addr);
+    snprintf(raw_op,12," %02x    ZPY ",base_addr);
     return (base_addr+y)&0xFF;
 }
 
 inline int cpu::ind_x() {
     int addr=(memory->read(pc+1)+x)&0xFF;
-    //snprintf(raw_op,12," %02x    INX ",addr);
+    snprintf(raw_op,12," %02x    INX ",addr);
     pc+=2;
     ++ind_xc;
     return (memory->read(addr))|((memory->read((addr+1)&0xFF))<<(8));
@@ -156,7 +156,7 @@ inline int cpu::ind_x() {
 
 inline int cpu::ind_y() {
     int addr=memory->read(pc+1);
-    //snprintf(raw_op,12," %02x    INY ",addr);
+    snprintf(raw_op,12," %02x    INY ",addr);
     pc+=2;
     ++ind_yc;
     return (((memory->read(addr))|((memory->read((addr+1)&0xFF))<<(8)))+y)&0xFFFF;
@@ -164,42 +164,42 @@ inline int cpu::ind_y() {
 
 inline int cpu::zp() {
     int base_addr=memory->read(pc+1);
-    //snprintf(raw_op,12," %02x    ZP  ",base_addr);
+    snprintf(raw_op,12," %02x    ZP  ",base_addr);
     pc+=2;
     ++zpc;
     return base_addr;
 }
 
 inline int cpu::immediate() {
-    //snprintf(raw_op,12," %02x    IMM ",memory->read(pc+1));
+    snprintf(raw_op,12," %02x    IMM ",memory->read(pc+1));
     pc+=2;
     ++immediatec;
     return pc-1;
 }
 
 inline int cpu::absa() {
-    //snprintf(raw_op,12," %02x %02x ABS ",memory->read(pc+1),memory->read(pc+2));
+    snprintf(raw_op,12," %02x %02x ABS ",memory->read(pc+1),memory->read(pc+2));
     pc+=3;
     ++absac;
     return memory->read2(pc-2);
 }
 
 inline int cpu::absa_y() {
-    //snprintf(raw_op,12," %02x %02x ABY ",memory->read(pc+1),memory->read(pc+2));
+    snprintf(raw_op,12," %02x %02x ABY ",memory->read(pc+1),memory->read(pc+2));
     pc+=3;
     ++absa_yc;
     return (memory->read2(pc-2)+y)&0xFFFF;
 }
 
 inline int cpu::absa_x() {
-    //snprintf(raw_op,12," %02x %02x ABX ",memory->read(pc+1),memory->read(pc+2));
+    snprintf(raw_op,12," %02x %02x ABX ",memory->read(pc+1),memory->read(pc+2));
     pc+=3;
     ++absa_xc;
     return (memory->read2(pc-2)+x)&0xFFFF;
 }
 
 inline signed char cpu::relative() {
-    //snprintf(raw_op,12," %02x    REL ",memory->read(pc+1));
+    snprintf(raw_op,12," %02x    REL ",memory->read(pc+1));
     pc+=2;
     ++relativec;
     return memory->read(pc-1);
@@ -210,7 +210,7 @@ inline int cpu::ind() {
     int lo,hi;
     hi=memory->read(pc+1);
     lo=memory->read(pc+2);
-    //snprintf(raw_op,12," %02x %02x IND ",hi,lo);
+    snprintf(raw_op,12," %02x %02x IND ",hi,lo);
     #endif
     int addr=memory->read2(pc+1);
     ++indc;
@@ -223,20 +223,20 @@ inline int cpu::ind() {
 }
 
 inline void cpu::imp() {
-    //snprintf(raw_op,12,"       IMP ");
+    snprintf(raw_op,12,"       IMP ");
     pc++;
     ++impc;
 }
 
 inline void cpu::accum() {
-    //snprintf(raw_op,12,"       ACC ");
+    snprintf(raw_op,12,"       ACC ");
     pc++;
     ++accumc;
 }
 
 //Operations
 inline void cpu::op_brk() {
-    //snprintf(assem_op,14,"BRK          ");
+    snprintf(assem_op,14,"BRK          ");
     pc++;
     push2(pc);
     status.brk = 1;
@@ -247,7 +247,7 @@ inline void cpu::op_brk() {
 
 inline void cpu::op_ora(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"ORA %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"ORA %04x (%02x)",addr,temp);
     acc|=temp;
     set_sign(acc);
     set_zero(acc);
@@ -255,7 +255,7 @@ inline void cpu::op_ora(int addr) {
 
 inline void cpu::op_aslm(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"ASL %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"ASL %04x (%02x)",addr,temp);
     set_carry(temp&0x80);
     temp<<=(1);
     set_zero(temp);
@@ -264,7 +264,7 @@ inline void cpu::op_aslm(int addr) {
 }
 
 inline void cpu::op_asla() {
-    //snprintf(assem_op,14,"ASL A        ");
+    snprintf(assem_op,14,"ASL A        ");
     set_carry(acc&0x80);
     acc<<=(1);
     set_zero(acc);
@@ -272,13 +272,13 @@ inline void cpu::op_asla() {
 }
 
 inline void cpu::op_php() {
-    //snprintf(assem_op,14,"PHP          ");
+    snprintf(assem_op,14,"PHP          ");
     push(status.reg);
     //status.brk = 1;
 }
                 
 inline void cpu::op_bpl(signed char offset) {
-    //snprintf(assem_op,14,"BPL %04x     ",pc+offset);
+    snprintf(assem_op,14,"BPL %04x     ",pc+offset);
     if(!status.sign) {
         pc+=offset;
         extra_time++;
@@ -289,14 +289,15 @@ inline void cpu::op_bpl(signed char offset) {
 }
 
 inline void cpu::op_clc() {
-    //snprintf(assem_op,14,"CLC          ");
+    snprintf(assem_op,14,"CLC          ");
     status.carry = 0;
 }
 
 inline void cpu::op_jsr(int addr) {
     //saves address immediately BEFORE the one I want to return to!!!
     //REASON: RTS pops the stack to the PC, THEN increments PC by 1
-    //snprintf(assem_op,14,"JSR %04x     ",addr);
+    snprintf(assem_op,14,"JSR %04x     ",addr);
+    rec_depth++;
     pc--;
     push2(pc);
     pc=addr;
@@ -304,7 +305,7 @@ inline void cpu::op_jsr(int addr) {
 
 inline void cpu::op_bit(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"BIT %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"BIT %04x (%02x)",addr,temp);
     set_zero(acc&temp);
     set_sign(temp);
     if((temp&0x40)>0)
@@ -315,7 +316,7 @@ inline void cpu::op_bit(int addr) {
 
 inline void cpu::op_and(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"BIT %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"BIT %04x (%02x)",addr,temp);
     acc&=temp;
     set_sign(acc);
     set_zero(acc);
@@ -323,7 +324,7 @@ inline void cpu::op_and(int addr) {
 
 inline void cpu::op_rolm(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"ROL %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"ROL %04x (%02x)",addr,temp);
     temp2 = status.carry;
     set_carry(temp&0x80);
     temp=((temp<<(1))+temp2);
@@ -333,12 +334,12 @@ inline void cpu::op_rolm(int addr) {
 }
 
 inline void cpu::op_plp() {
-    //snprintf(assem_op,14,"PLP          ");
+    snprintf(assem_op,14,"PLP          ");
     status.reg=pop();
 }
 
 inline void cpu::op_rola() {
-    //snprintf(assem_op,14,"ROL A        ");
+    snprintf(assem_op,14,"ROL A        ");
     temp = status.carry;
     set_carry(acc&0x80);
     acc=(acc<<(1))+temp;
@@ -347,7 +348,7 @@ inline void cpu::op_rola() {
 }
 
 inline void cpu::op_bmi(signed char offset) {
-    //snprintf(assem_op,14,"BMI %04x     ",pc+offset);
+    snprintf(assem_op,14,"BMI %04x     ",pc+offset);
     if(status.sign) {
         pc+=offset;
         extra_time++;
@@ -358,19 +359,19 @@ inline void cpu::op_bmi(signed char offset) {
 }
 
 inline void cpu::op_sec() {
-    //snprintf(assem_op,14,"SEC          ");
+    snprintf(assem_op,14,"SEC          ");
     status.carry = 1;
 }
 
 inline void cpu::op_rti() {
     status.reg=pop();
     pc=pop2();
-    //snprintf(assem_op,14,"RTI: %04x     ",pc);
+    snprintf(assem_op,14,"RTI: %04x     ",pc);
 }
 
 inline void cpu::op_eor(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"EOR %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"EOR %04x (%02x)",addr,temp);
     acc^=temp;
     set_sign(acc);
     set_zero(acc);
@@ -378,7 +379,7 @@ inline void cpu::op_eor(int addr) {
 
 inline void cpu::op_lsrm(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"LSR %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"LSR %04x (%02x)",addr,temp);
     status.sign = 0;
     set_carry(temp&0x01);
     temp>>=(1);
@@ -387,12 +388,12 @@ inline void cpu::op_lsrm(int addr) {
 }
 
 inline void cpu::op_pha() {
-    //snprintf(assem_op,14,"PHA          ");
+    snprintf(assem_op,14,"PHA          ");
     push(acc);
 }
 
 inline void cpu::op_lsra() {
-    //snprintf(assem_op,14,"LSR A        ");
+    snprintf(assem_op,14,"LSR A        ");
     status.sign = 0;
     set_carry(acc&0x01);
     acc>>=(1);
@@ -400,12 +401,12 @@ inline void cpu::op_lsra() {
 }
 
 inline void cpu::op_jmp(int addr) {
-    //snprintf(assem_op,14,"JMP %04x     ",addr);
+    snprintf(assem_op,14,"JMP %04x     ",addr);
     pc=addr;
 }
 
 inline void cpu::op_bvc(signed char offset) {
-    //snprintf(assem_op,14,"BVC %04x     ",pc+offset);
+    snprintf(assem_op,14,"BVC %04x     ",pc+offset);
     if(!status.verflow) {
         pc+=offset;
         extra_time++;
@@ -416,19 +417,19 @@ inline void cpu::op_bvc(signed char offset) {
 }
 
 inline void cpu::op_cli() {
-    //snprintf(assem_op,14,"CLI          ");
+    snprintf(assem_op,14,"CLI          ");
     status.inter = 0;
 }
 
 inline void cpu::op_rts() {
     pc=pop2();
-    //snprintf(assem_op,14,"RTS (%04x)   ",pc);
+    snprintf(assem_op,14,"RTS (%04x)   ",pc);
     pc++;
 }
 
 inline void cpu::op_adc(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"ADC %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"ADC %04x (%02x)",addr,temp);
     temp2=temp+acc+status.carry;
     //if(((acc^temp2)<0x80)               &&          (((acc^(acc+temp2))<0x80)))
     //if the operands have the same sign, AND      The operands have the same sign as the result
@@ -447,7 +448,7 @@ inline void cpu::op_adc(int addr) {
 
 inline void cpu::op_rorm(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"ROR %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"ROR %04x (%02x)",addr,temp);
     temp2=status.carry*0x80;
     set_carry(temp&0x01);
     temp=(temp>>(1))+temp2;
@@ -457,14 +458,14 @@ inline void cpu::op_rorm(int addr) {
 }
 
 inline void cpu::op_pla() {
-    //snprintf(assem_op,14,"PLA          ");
+    snprintf(assem_op,14,"PLA          ");
     acc=pop();
     set_sign(acc);
     set_zero(acc);
 }
 
 inline void cpu::op_rora() {
-    //snprintf(assem_op,14,"ROR A        ");
+    snprintf(assem_op,14,"ROR A        ");
     temp2=status.carry*0x80;
     set_carry(acc&0x01);
     acc=(acc>>(1))+temp2;
@@ -473,7 +474,7 @@ inline void cpu::op_rora() {
 }
 
 inline void cpu::op_bvs(signed char offset) {
-    //snprintf(assem_op,14,"BVS %04x     ",pc+offset);
+    snprintf(assem_op,14,"BVS %04x     ",pc+offset);
     if(status.verflow) {
         pc+=offset;
         extra_time++;
@@ -484,47 +485,47 @@ inline void cpu::op_bvs(signed char offset) {
 }
 
 inline void cpu::op_sei() {
-    //snprintf(assem_op,14,"SEI          ");
+    snprintf(assem_op,14,"SEI          ");
     status.inter = 1;
 }
 
 inline void cpu::op_sty(int addr) {
     //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
-        //snprintf(assem_op,14,"STY %04x     ",addr);
+        snprintf(assem_op,14,"STY %04x     ",addr);
         memory->write(addr,y);
     //}
 }
 
 inline void cpu::op_sta(int addr) {
     //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
-        //snprintf(assem_op,14,"STA %04x     ",addr);
+        snprintf(assem_op,14,"STA %04x     ",addr);
         memory->write(addr,acc);
     //}
 }
 
 inline void cpu::op_stx(int addr) {
     //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
-        //snprintf(assem_op,14,"STX %04x     ",addr);
+        snprintf(assem_op,14,"STX %04x     ",addr);
         memory->write(addr,x);
     //}
 }
 
 inline void cpu::op_dey() {
-    //snprintf(assem_op,14,"DEY          ");
+    snprintf(assem_op,14,"DEY          ");
     y--;
     set_sign(y);
     set_zero(y);
 }
 
 inline void cpu::op_txa() {
-    //snprintf(assem_op,14,"TXA          ");
+    snprintf(assem_op,14,"TXA          ");
     acc=x;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_bcc(signed char offset) {
-    //snprintf(assem_op,14,"BCC %04x     ",pc+offset);
+    snprintf(assem_op,14,"BCC %04x     ",pc+offset);
     if(!status.carry) {
         extra_time++;
         pc+=offset;
@@ -535,7 +536,7 @@ inline void cpu::op_bcc(signed char offset) {
 }
 
 inline void cpu::op_tya() {
-    //snprintf(assem_op,14,"TYA          ");
+    snprintf(assem_op,14,"TYA          ");
     acc=y;
     set_sign(y);
     set_zero(y);
@@ -543,13 +544,13 @@ inline void cpu::op_tya() {
 
 inline void cpu::op_txs() {
     sp=x;
-    //snprintf(assem_op,14,"TXS          ");
+    snprintf(assem_op,14,"TXS          ");
 }
 
 inline void cpu::op_ldy(int addr) {
     //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
         y=memory->read(addr);
-        //snprintf(assem_op,14,"LDY %04x (%02x)",addr,y);
+        snprintf(assem_op,14,"LDY %04x (%02x)",addr,y);
         set_sign(y);
         set_zero(y);
     //}
@@ -558,7 +559,7 @@ inline void cpu::op_ldy(int addr) {
 inline void cpu::op_lda(int addr) {
     //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
         acc=memory->read(addr);
-        //snprintf(assem_op,14,"LDA %04x (%02x)",addr,acc);
+        snprintf(assem_op,14,"LDA %04x (%02x)",addr,acc);
         set_sign(acc);
         set_zero(acc);
     //}
@@ -567,28 +568,28 @@ inline void cpu::op_lda(int addr) {
 inline void cpu::op_ldx(int addr) {
     //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
         x=memory->read(addr);
-        //snprintf(assem_op,14,"LDX %04x (%02x)",addr,x);
+        snprintf(assem_op,14,"LDX %04x (%02x)",addr,x);
         set_sign(x);
         set_zero(x);
     //}
 }
 
 inline void cpu::op_tay() {
-    //snprintf(assem_op,14,"TAY          ");
+    snprintf(assem_op,14,"TAY          ");
     y=acc;
     set_sign(y);
     set_zero(y);
 }
 
 inline void cpu::op_tax() {
-    //snprintf(assem_op,14,"TAX          ");
+    snprintf(assem_op,14,"TAX          ");
     x=acc;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_bcs(signed char offset) {
-    //snprintf(assem_op,14,"BCS %04x     ",pc+offset);
+    snprintf(assem_op,14,"BCS %04x     ",pc+offset);
     if(status.carry) {
         extra_time++;
         pc+=offset;
@@ -600,19 +601,19 @@ inline void cpu::op_bcs(signed char offset) {
 
 inline void cpu::op_clv() {
     status.verflow = 0;
-    //snprintf(assem_op,14,"CLV          ");
+    snprintf(assem_op,14,"CLV          ");
 }
 
 inline void cpu::op_tsx() {
     x=sp;
-    //snprintf(assem_op,14,"TSX          ");
+    snprintf(assem_op,14,"TSX          ");
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_cpy(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"CPY %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"CPY %04x (%02x)",addr,temp);
     if(y>=temp)
         status.carry = 1;
     else
@@ -624,7 +625,7 @@ inline void cpu::op_cpy(int addr) {
 
 inline void cpu::op_cmp(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"CMP %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"CMP %04x (%02x)",addr,temp);
     if(acc>=temp)
         status.carry = 1;
     else
@@ -636,7 +637,7 @@ inline void cpu::op_cmp(int addr) {
 
 inline void cpu::op_dec(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"DEC %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"DEC %04x (%02x)",addr,temp);
     temp--;
     set_sign(temp);
     set_zero(temp);
@@ -644,21 +645,21 @@ inline void cpu::op_dec(int addr) {
 }
 
 inline void cpu::op_iny() {
-    //snprintf(assem_op,14,"INY          ");
+    snprintf(assem_op,14,"INY          ");
     y++;
     set_sign(y);
     set_zero(y);
 }
 
 inline void cpu::op_dex() {
-    //snprintf(assem_op,14,"DEX          ");
+    snprintf(assem_op,14,"DEX          ");
     x--;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_bne(signed char offset) {
-    //snprintf(assem_op,14,"BNE %04x     ",pc+offset);
+    snprintf(assem_op,14,"BNE %04x     ",pc+offset);
     if(!status.zero) {
         pc+=offset;
         extra_time++;
@@ -669,13 +670,13 @@ inline void cpu::op_bne(signed char offset) {
 }
 
 inline void cpu::op_cld() {
-    //snprintf(assem_op,14,"CLD          ");
+    snprintf(assem_op,14,"CLD          ");
     status.dec = 0;
 }
 
 inline void cpu::op_cpx(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"CPX %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"CPX %04x (%02x)",addr,temp);
     if(x>=temp)
         status.carry = 1;
     else
@@ -687,7 +688,7 @@ inline void cpu::op_cpx(int addr) {
 
 inline void cpu::op_sbc(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"SBC %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"SBC %04x (%02x)",addr,temp);
     temp2=temp;
     temp+=(status.carry?0:1);
     set_zero(acc-temp);
@@ -709,7 +710,7 @@ inline void cpu::op_sbc(int addr) {
 
 inline void cpu::op_inc(int addr) {
     temp=memory->read(addr);
-    //snprintf(assem_op,14,"INC %04x (%02x)",addr,temp);
+    snprintf(assem_op,14,"INC %04x (%02x)",addr,temp);
     temp++;
     set_sign(temp);
     set_zero(temp);
@@ -717,18 +718,18 @@ inline void cpu::op_inc(int addr) {
 }
 
 inline void cpu::op_inx() {
-    //snprintf(assem_op,14,"INX          ");
+    snprintf(assem_op,14,"INX          ");
     x++;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_nop() {
-    //snprintf(assem_op,14,"NOP          ");
+    snprintf(assem_op,14,"NOP          ");
 }
 
 inline void cpu::op_beq(signed char offset) {
-    //snprintf(assem_op,14,"BEQ %04x     ",pc+offset);
+    snprintf(assem_op,14,"BEQ %04x     ",pc+offset);
     if(status.zero) {
         extra_time++;
         pc+=offset;
@@ -739,7 +740,7 @@ inline void cpu::op_beq(signed char offset) {
 }
 
 inline void cpu::op_sed() {
-    //snprintf(assem_op,14,"SED          ");
+    snprintf(assem_op,14,"SED          ");
     status.dec = 1;
 }
 
@@ -771,8 +772,7 @@ const int cpu::run_next_op() {
     oldsp=sp;
     oldstatus=status;
     addresses[pc] = true;
-    //cout<<hex<<pc<<endl;
-    //snprintf(op_addr,9,"%04x: %02x",pc,nextop);
+     snprintf(op_addr,9,"%04x: %02x",pc,nextop);
     assem_op[0] = 0;
 
     switch(nextop) {
@@ -942,7 +942,7 @@ const int cpu::run_next_op() {
         op_rolm(addr);
         break;
     case 0x40://RTI
-        if(nsf_mode) return 0;
+        //if(nsf_mode) return 0;
         imp();
         op_rti();
         break;
@@ -1027,8 +1027,9 @@ const int cpu::run_next_op() {
         op_lsrm(addr);
         break;
     case 0x60://RTS
-        if(nsf_mode) return 0;
         imp();
+        if(nsf_mode&&rec_depth==0) return 0;
+        rec_depth--;
         op_rts();
         break;
     case 0x61://ADC IND X
@@ -1464,8 +1465,8 @@ const int cpu::run_next_op() {
     }
     nextopoffset = offset;
     nextoparg = addr;
-    //if(strlen(assem_op))
-    //    util::debug(ORIGIN,"%s%s%s  acc: %02x x: %02x y: %02x sp: %02x status: %s\n",op_addr,raw_op,assem_op,oldacc,oldx,oldy,oldsp,stat_string(oldstatus));
+    if(strlen(assem_op))
+        util::debug(ORIGIN,"%s%s%s  acc: %02x x: %02x y: %02x sp: %02x status: %s\n",op_addr,raw_op,assem_op,oldacc,oldx,oldy,oldsp,stat_string(oldstatus));
 
     //audio->clock_cpu(runtime[nextop]+extra_time);
     return runtime[nextop]+extra_time;
@@ -1551,7 +1552,7 @@ void cpu::trigger_irq() {
 
 void cpu::reset(int addr) {
     op_jmp(addr);
-    util::debug("Initiated soft reset.\n");
+    //util::debug("Initiated soft reset.\n");
 }
 
 void cpu::set_x(int val) {
@@ -1560,6 +1561,10 @@ void cpu::set_x(int val) {
 
 void cpu::set_acc(int val) {
     acc = (val & 0xff);
+}
+
+void cpu::increment_frame() {
+    frame++;
 }
 
 inline void cpu::push2(unsigned int val) {

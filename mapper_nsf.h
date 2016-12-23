@@ -20,4 +20,5 @@ public:
     void reset_map();
 protected:
     rom * cart;
+    unsigned int bank[8];
 };

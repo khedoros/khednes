@@ -151,6 +151,7 @@ int main(int argc, char ** argv) {
     ppu ppui(cart,res);
     //cout<<"PPU started. Going to start apu."<<endl;
     apu apui;
+    SDL_PauseAudioDevice(apui.get_id(), true);
     //cout<<"APU started. Going to bring up memory map"<<endl;
     mem memi(cart,ppui,apui);
     apui.setmem(&memi);
@@ -170,6 +171,7 @@ int main(int argc, char ** argv) {
     //int delay = 0;
     //long delay_count = 0;
     //long delay_total = 0;
+    SDL_PauseAudioDevice(apui.get_id(), false);
     while (1==1) {
         //cout<<"Start of event loop."<<endl;
         //int frame_start = SDL_GetTicks();
@@ -239,10 +241,14 @@ int main(int argc, char ** argv) {
                 }
                 else if(event.key.keysym.scancode==SDL_SCANCODE_P) {
                     paused=!paused;
-                    if(paused)
+                    if(paused) {
+                        SDL_PauseAudioDevice(apui.get_id(), true);
                         printf("Paused emulation.\n");
-                    else
+                    }
+                    else {
+                        SDL_PauseAudioDevice(apui.get_id(), false);
                         printf("Unpaused emulation.\n");
+                    }
                 }
                 else if(event.key.keysym.scancode >= SDL_SCANCODE_1 &&
                         event.key.keysym.scancode <= SDL_SCANCODE_0) {
@@ -351,12 +357,18 @@ int main(int argc, char ** argv) {
     return 0;
 }
 
-void init_nsf(rom& cart, mem& memi, cpu& cpui) {
+unsigned int get_choice(rom& cart) {
     unsigned int choice = 0;
     while(choice < 1 || choice > cart.get_song_count()) {
-        cout<<"Choose a song number between 1 and "<<cart.get_song_count()<<": ";
+        cout<<"Choose a song number between 1 and "<<dec<<cart.get_song_count()<<": ";
+        cout.flush();
         cin>>choice;
     }
+    return choice;
+}
+
+bool init_nsf(rom& cart, mem& memi, cpu& cpui, unsigned int choice = 0) {
+    cout<<"Playing song "<<dec<<choice<<" out of "<<cart.get_song_count()<<endl;
     cpui.reset(cart.get_rst_addr());
     cpui.set_acc(choice-1);
     cpui.set_x(0);
@@ -369,14 +381,29 @@ void init_nsf(rom& cart, mem& memi, cpu& cpui) {
     memi.write(0x4015, 0x0f);
     memi.write(0x4017, 0x40);
     cart.reset_map();
-    while(cpui.run_next_op()) {}
+    int ret = 1;
+    while(ret) {
+        ret = cpui.run_next_op();
+        if(ret < 0) return false;
+    }
+    cpui.reset(cart.get_nmi_addr());
+    cout<<"I think I init'ed the program properly."<<endl;
+    return true;
 }
 
 int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
     bool paused=false;
-    int pstart = SDL_GetTicks();
     int frame = 0;
+    int choice = get_choice(cart);
+    bool success = init_nsf(cart, memi, cpui,choice);
+    if(!success) {
+        cout<<"Failed to init nsf."<<endl;
+        return 1;
+    }
+    SDL_PauseAudioDevice(apui.get_id(), false);
+    int pstart = SDL_GetTicks();
     while (1==1) {
+exit_poll_loop:
         SDL_Event event;
         while(SDL_PollEvent(&event)){  /* Loop until there are no events left on the queue */
             switch(event.type){  /* Process the appropiate event type */
@@ -392,15 +419,38 @@ int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
                     cout<<"Called SDL_Quit()"<<endl;
                     return 0;
                 }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_A) {
+                    choice--;
+                    if(choice<1) choice = cart.get_song_count();
+                    SDL_PauseAudioDevice(apui.get_id(), true);
+                    init_nsf(cart, memi, cpui, choice);
+                    SDL_PauseAudioDevice(apui.get_id(), false);
+                    goto exit_poll_loop;
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_D) {
+                    choice++;
+                    if(choice>cart.get_song_count()) choice = 1;
+                    SDL_PauseAudioDevice(apui.get_id(), true);
+                    init_nsf(cart, memi, cpui, choice);
+                    SDL_PauseAudioDevice(apui.get_id(), false);
+                    goto exit_poll_loop;
+                }
                 else if(event.key.keysym.scancode==SDL_SCANCODE_R) {
-                    cpui.reset(memi.get_rst_addr());
+                    SDL_PauseAudioDevice(apui.get_id(), true);
+                    init_nsf(cart,memi,cpui);
+                    SDL_PauseAudioDevice(apui.get_id(), false);
+                    goto exit_poll_loop;
                 }
                 else if(event.key.keysym.scancode==SDL_SCANCODE_P) {
                     paused=!paused;
-                    if(paused)
+                    if(paused) {
                         printf("Paused emulation.\n");
-                    else
+                        SDL_PauseAudioDevice(apui.get_id(), true);
+                    }
+                    else {
                         printf("Unpaused emulation.\n");
+                        SDL_PauseAudioDevice(apui.get_id(), false);
+                    }
                 }
                 else {
                     //printf("Keydown\n");
@@ -424,7 +474,14 @@ int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
         }
         if(!paused) {
             //cout<<"Running the CPU"<<endl;
-            int cpu_ret=cpui.run_ops();
+            int cpu_ret = 1;
+            while(cpu_ret && cpu_ret > 0) {
+                cpu_ret=cpui.run_next_op();
+            }
+
+            cpui.reset(cart.get_nmi_addr());
+            cpui.increment_frame();
+
             //cout<<"Ran the CPU"<<endl;
             if(cpu_ret < 0) {
                 return 1;

@@ -7,6 +7,7 @@
 #include "mapper_003_cnrom.h"
 #include "mapper_011_color_dreams.h"
 #include "mapper_nsf.h"
+#include<assert.h>
 #define ORIGIN 5
 
 rom::rom(std::string filename, int m) : file(filename), mapper_num(m) {
@@ -15,14 +16,18 @@ rom::rom(std::string filename, int m) : file(filename), mapper_num(m) {
         print_info();
     }
     else {
+        printf("Trying to load as NSF instead\n");
         valid=load_nsf(filename);
-        if(valid) {
+        if(nsf) {
             print_nsf_info();
-            return;
         }
-        print_info();
-        printf("Problem loading %s. Make sure it exists and you can read it.\n",filename.c_str());
-        exit(1);
+        else {
+            print_info();
+        }
+        if(!valid) {
+            printf("Problem loading %s. Make sure it exists and you can read it.\n",filename.c_str());
+            exit(1);
+        }
     }
     //printf("CHR_PAGE_SIZE: %d sizeof crom: %d crom pages: %d",CHR_PAGE_SIZE,crom_pages,CHR_PAGE_SIZE*crom_pages);
 }
@@ -36,6 +41,7 @@ bool rom::load(std::string& filename) {
     std::ifstream filein;
     filein.open(filename.c_str(),std::ios::binary|std::ios::in);
     if(!(filein&&filein.is_open())) {
+        filein.close();
         return false;
     }
     //get filesize
@@ -43,6 +49,7 @@ bool rom::load(std::string& filename) {
     filesize=int(filein.tellg());
     filein.seekg(0,std::ios::beg);
     if(filesize<MIN_FILE_SIZE) {
+        filein.close();
         return false;
     }
     //parse the header, assign appropriate values to properties
@@ -67,6 +74,7 @@ bool rom::load(std::string& filename) {
 
     if(header[0]!='N'||header[1]!='E'||header[2]!='S'||header[3]!=0x1a) {
         printf("(%02x)  (%02x)  (%02x)  (%02x)", header[0],header[1],header[2],header[3]);
+        filein.close();
         return false;
     }
 
@@ -130,6 +138,7 @@ bool rom::load(std::string& filename) {
         break;
     default:
         std::cout<<"Mapper not implemented yet."<<std::endl;
+        filein.close();
         return false;
     }
 
@@ -160,13 +169,15 @@ bool rom::load_nsf(std::string& filename) {
     std::ifstream filein;
     filein.open(filename.c_str(),std::ios::binary|std::ios::in);
     if(!(filein&&filein.is_open())) {
+        filein.close();
         return false;
     }
     //get filesize
     filein.seekg(0,std::ios::end);
     filesize=int(filein.tellg());
     filein.seekg(0,std::ios::beg);
-    if(filesize<MIN_FILE_SIZE) {
+    if(filesize<0x100) {
+        filein.close();
         return false;
     }
     //parse the header, assign appropriate values to properties
@@ -191,11 +202,14 @@ bool rom::load_nsf(std::string& filename) {
 
     if(header[0]!='N'||header[1]!='E'||header[2]!='S'||header[3]!='M'||header[4]!=0x1a) {
         printf("(%02x)  (%02x)  (%02x)  (%02x) (%02x)", header[0],header[1],header[2],header[3],header[4]);
+        printf("Header doesn't match expected NSF header.\n");
+        filein.close();
         return false;
     }
     
     if(header[5] != 1) {
         printf("I don't handle files of version %d.\n", header[5]);
+        filein.close();
         return false;
     }
     song_count = header[6];
@@ -244,7 +258,7 @@ bool rom::load_nsf(std::string& filename) {
         printf("Extra sound chip support specified, and I don't currently support that.\n");
     }
 
-    bool uses_banks = false;
+    uses_banks = false;
     map = new mapper_nsf(this);
     for(int i=0;i<8;++i) {
         if(header[0x70+i]) uses_banks = true;
@@ -252,18 +266,27 @@ bool rom::load_nsf(std::string& filename) {
 
     if(uses_banks) {
         load_addr &= 0xfff;
-        prom.resize(filesize - 0x80 + (load_addr&0xFFF), 0);
+        size_t prom_size = filesize - 0x80 + (load_addr&0xFFF);
+        assert(prom_size > 0 && prom_size + 0x8000 > rst_addr);
+        prom.resize(prom_size, 0);
         for(int i=0;i<8;++i) {
             map->put_pbyte(0, header[0x70+i], 0x5ff8+i);
         }
+        load_addr += 0x8000;
     }
     else {
-        prom.resize(0x8000,0);
+        size_t prom_size = 0x8000;
+        //size_t prom_size = filesize - 0x80 + load_addr;
+        //assert(prom_size > 0 && prom_size + 0x8000 > rst_addr);
+        prom.resize(prom_size, 0);
+        //prom.resize(0x8000,0);
     }
+    prom_pages = (prom.size() / PRG_PAGE_SIZE) + 1;
+    std::cout<<"PROM size: "<<std::dec<<prom.size()<<"(0x"<<std::hex<<prom.size()<<")"<<std::endl;
     prom_w.resize(prom.size());
 
     filein.read(reinterpret_cast<char*>(&prom[load_addr-0x8000]),filesize-0x80);
-    for(int i=0;i<prom_pages*PRG_PAGE_SIZE-1;++i) {
+    for(int i=0;i<prom.size()-1;++i) {
         prom_w[i] = prom[i] | (prom[i+1]<<(8));
     }
 

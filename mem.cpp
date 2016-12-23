@@ -34,6 +34,7 @@ mem::mem(rom &romi, ppu &ppui,apu &apui) : cart(romi), pu(ppui), snd(apui), cycl
 }
 
 mem::~mem() {
+    return;
     if(cart.has_sram()) {
         return;
         string outfile = cart.filename();

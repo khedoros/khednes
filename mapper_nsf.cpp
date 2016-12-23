@@ -2,6 +2,7 @@
 
 mapper_nsf::mapper_nsf(rom* r) : mapper(r) {
     cart = r;
+    reset_map();
 }
 const unsigned int mapper_nsf::get_pbyte(const unsigned int addr) {
     if(cart->prom_pages > 1) return cart->prom[addr-0x8000];
@@ -52,5 +53,12 @@ rom::ppu_change_t mapper_nsf::cycle_forward(unsigned int cycle) {
 }
 
 void mapper_nsf::reset_map() {
-    //Actually implement map reset in here
+    if(cart->uses_banks) {
+        for(int i=0;i<8;++i)
+            bank[i] = cart->get_header(0x70+i);
+    }
+    else {
+        for(int i=0;i<8;++i)
+            bank[i] = i;
+    }
 }
