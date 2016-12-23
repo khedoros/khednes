@@ -44,4 +44,6 @@ private:
     int mouse_y;
     std::bitset<8> joy1_buttons;
     std::bitset<8> joy2_buttons;
+    Vect<int> read_from;
+    Vect<int> written_to;
 };

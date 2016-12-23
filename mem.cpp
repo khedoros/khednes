@@ -7,6 +7,8 @@ using namespace std;
 mem::mem(rom &romi, ppu &ppui,apu &apui) : cart(romi), pu(ppui), snd(apui), cycle(0), mouse_x(0), mouse_y(0) {
     ram.resize(0x800);
     sram.resize(0x2000);
+    read_from.resize(0x10000, false);
+    written_to.resize(0x10000, false);
     for(int i=0;i<8;i++) {
         joy1_buttons[i]=false;
     }
@@ -42,6 +44,25 @@ mem::~mem() {
         if(sram_out.is_open()) {
             sram_out.write(reinterpret_cast<char *>(&(sram[0])), 0x2000);
             cout<<"Saved file "<<outfile<<endl;
+        }
+    }
+    for(int i=0;i<0x10000;++i) {
+        string area="";
+        if(i>=0&&i<0x100) area = string("Zero-page RAM");
+        else if(i>=0x100  && i<0x0200) area = string("Stack RAM");
+        else if(i>=0x200  && i<0x0800) area = string("General RAM");
+        else if(i>=0x2000 && i<0x4000) area = string("PPU Registers");
+        else if(i>=0x4000 && i<0x4018) area = string("Audio+controllers");
+        else if(i>=0xc000 && i<0x10000) area = string("ROM");
+        else continue;
+        printf("%04X (%s): ", i, area.c_str());
+        if(written_to[i] || read_from[i]) {
+            if(written_to[i]) printf("written ");
+            if(read_from[i]) printf("read");
+            printf("\n");
+        }
+        else {
+            printf("neither\n");
         }
     }
 }
@@ -156,6 +177,7 @@ void mem::sendmousedown(int x,int y) {
 
 const unsigned int mem::read(unsigned int address) {
         address&=0xFFFF;
+        read_from[address] = true;
         if(address<=0x1FFF) { 
                 return ram[address&0x7ff];
         }
@@ -224,6 +246,8 @@ const unsigned int mem::read(unsigned int address) {
 
 const unsigned int mem::read2(unsigned int address) {        
         address&=0xFFFF;
+        read_from[address]=true;
+        read_from[address+1]=true;
         if(address<0x1FFF) { //0x1FFF because I'm returning 2 bytes
                 unsigned int temp1=ram[(address+1)&0x7FF];
                 temp1<<=(8);
@@ -249,6 +273,7 @@ const unsigned int mem::read2(unsigned int address) {
 
 void mem::write(unsigned int address, unsigned char val) {
         address&=0xFFFF;
+        written_to[address]=true;
         if(address>=0x2000&&address<0x4000) {
                 //cout<<"Writing to PPU "<<endl;
                 pu.reg_write((address&7)+0x2000,val,cycle);
