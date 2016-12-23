@@ -85,6 +85,8 @@ int getopt(int nargc, char * const nargv[], const char *ostr) {
 //Linux provides getopt, so include the header.
 #include <getopt.h>
 #endif
+    
+int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui);
 
 int main(int argc, char ** argv) {
     opterr = 0;
@@ -350,7 +352,7 @@ int main(int argc, char ** argv) {
 }
 
 void init_nsf(rom& cart, mem& memi, cpu& cpui) {
-    int choice = 0;
+    unsigned int choice = 0;
     while(choice < 1 || choice > cart.get_song_count()) {
         cout<<"Choose a song number between 1 and "<<cart.get_song_count()<<": ";
         cin>>choice;
@@ -365,14 +367,15 @@ void init_nsf(rom& cart, mem& memi, cpu& cpui) {
     for(int i=0x4000;i<0x4014;++i)
         memi.write(i,0);
     memi.write(0x4015, 0x0f);
-    memi.write(0x40, 0x4017);
+    memi.write(0x4017, 0x40);
     cart.reset_map();
     while(cpui.run_next_op()) {}
 }
 
-int run_nsf( rom& cart, apu& apui, mem& memi, cpu& cpui) {
+int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
     bool paused=false;
     int pstart = SDL_GetTicks();
+    int frame = 0;
     while (1==1) {
         SDL_Event event;
         while(SDL_PollEvent(&event)){  /* Loop until there are no events left on the queue */
@@ -411,7 +414,6 @@ int run_nsf( rom& cart, apu& apui, mem& memi, cpu& cpui) {
                 //SDL_PauseAudio(true);
                 SDL_Quit();
                 cpui.print_details();
-                printf("%d frames rendered in %f seconds. (%f FPS)\n",ppui.get_frame(),float(clock())/float(CLOCKS_PER_SEC),float(ppui.get_frame())/(float(clock())/float(CLOCKS_PER_SEC)));
                 return 0;
                 break;
             default: /* Report an unhandled event */
@@ -435,31 +437,21 @@ int run_nsf( rom& cart, apu& apui, mem& memi, cpu& cpui) {
                     //cout<<"Locking audio...";
                     SDL_LockAudioDevice(apu_id);
                     //cout<<"done."<<endl;
-                    apui.set_frame(ppui.get_frame());
+                    apui.set_frame(frame);
                     apui.gen_audio();
                     //apui.dat.buffered += 735; Dude, do this in gen_audio, not here =/
                     //cout<<"Unlocking audio...";
                     SDL_UnlockAudioDevice(apu_id);
                     //cout<<"done."<<endl;
                 }
-                //cout<<SDL_GetTicks()<<": Frame: "<<ppui.get_frame()<<" Write pos: "<<apui.write_pos<<endl;
-                //cout<<"Running the PPU"<<endl;
-                int ppu_ret=ppui.calc();
-                //cout<<"Ran the PPU"<<endl;
-                if(ppu_ret>0) {
-                    if(ppu_ret==1) {
-                        //cout<<"Triggering NMI in CPU"<<endl;
-                        cpui.trigger_nmi();
-                    }
-                }
             }
         }
 
         //Calculates the time that the frame should end at, and delays until that time
         //cout<<"Timing two"<<endl;
-        int frames = ppui.get_frame();
         int now = SDL_GetTicks();
-        int delay = pstart + int(double(frames) * double(1000) / double(60)) - now;
+        frame++;
+        int delay = pstart + int(double(frame) * double(1000) / double(60)) - now;
         //cout<<"Frame: "<<frames<<" now: "<<now<<" delay: "<<delay<<endl;       
         if(delay > 0) {
             SDL_Delay(delay);

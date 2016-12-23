@@ -293,17 +293,17 @@ const std::string& rom::filename() {
     return file;
 }
 
-const int rom::get_song_count() {
+const unsigned int rom::get_song_count() {
     if(nsf) return song_count;
     return 0;
 }
 
-const int rom::get_default_song() {
+const unsigned int rom::get_default_song() {
     if(nsf) return song_index;
     return 0;
 }
 
-const unsigned int rom::get_header(int addr) {
+const unsigned int rom::get_header(const unsigned int addr) {
     if(addr >= header.size()) return 0;
     else return header[addr];
 }
@@ -414,4 +414,8 @@ void rom::ppu_change(unsigned int cycle, unsigned int addr, unsigned int val) {
 
 rom::ppu_change_t rom::cycle_forward(unsigned int cycle) {
     return map->cycle_forward(cycle);
+}
+
+void rom::reset_map() {
+    map->reset_map();
 }

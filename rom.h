@@ -25,14 +25,15 @@ public:
         ~rom();
         bool isValid();
         bool isNSF();
-        int get_song_count();
-        int get_default_song();
+        const unsigned int get_song_count();
+        const unsigned int get_default_song();
         void print_info();
         void print_nsf_info();
-        const unsigned int get_header(int);
+        const unsigned int get_header(const unsigned int);
         const unsigned int get_rst_addr();
         const unsigned int get_nmi_addr();
         const unsigned int get_irq_addr();
+        void reset_map();
         const unsigned int get_pbyte(const unsigned int addr);
         const unsigned int get_pword(unsigned int);
         const unsigned int get_cbyte(const unsigned int addr);
