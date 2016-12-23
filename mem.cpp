@@ -300,6 +300,7 @@ void mem::write(unsigned int address, unsigned char val) {
                 if((val&0x01)==1) {
                                         joy1_strobe=true;
                                         joy1_bit=0;
+                                        joy2_bit=0;
                                 }
                                 else {
                                         joy1_strobe=false;
