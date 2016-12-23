@@ -50,3 +50,5 @@ rom::ppu_change_t mapper::cycle_forward(unsigned int cycle) {
     a.val = 0;
     return a;
 }
+
+void mapper::reset_map() {}

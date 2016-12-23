@@ -15,7 +15,7 @@ void cpu::debug_dummy(const char *,...) {
     return;
 }
 
-cpu::cpu(mem * data, apu * ap, const unsigned int start_loc) {
+cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf) {
     for(int i=0;i<256;++i) {
         inst_counts[i]=0;
     }
@@ -774,6 +774,7 @@ const int cpu::run_next_op() {
     //cout<<hex<<pc<<endl;
     //snprintf(op_addr,9,"%04x: %02x",pc,nextop);
     assem_op[0] = 0;
+
     switch(nextop) {
     case 0x00://BRK
         imp();
@@ -941,6 +942,7 @@ const int cpu::run_next_op() {
         op_rolm(addr);
         break;
     case 0x40://RTI
+        if(nsf_mode) return 0;
         imp();
         op_rti();
         break;
@@ -1025,6 +1027,7 @@ const int cpu::run_next_op() {
         op_lsrm(addr);
         break;
     case 0x60://RTS
+        if(nsf_mode) return 0;
         imp();
         op_rts();
         break;
@@ -1461,8 +1464,8 @@ const int cpu::run_next_op() {
     }
     nextopoffset = offset;
     nextoparg = addr;
-    if(0 && strlen(assem_op))
-        util::debug(ORIGIN,"%s%s%s  acc: %02x x: %02x y: %02x sp: %02x status: %s\n",op_addr,raw_op,assem_op,oldacc,oldx,oldy,oldsp,stat_string(oldstatus));
+    //if(strlen(assem_op))
+    //    util::debug(ORIGIN,"%s%s%s  acc: %02x x: %02x y: %02x sp: %02x status: %s\n",op_addr,raw_op,assem_op,oldacc,oldx,oldy,oldsp,stat_string(oldstatus));
 
     //audio->clock_cpu(runtime[nextop]+extra_time);
     return runtime[nextop]+extra_time;
@@ -1549,6 +1552,14 @@ void cpu::trigger_irq() {
 void cpu::reset(int addr) {
     op_jmp(addr);
     util::debug("Initiated soft reset.\n");
+}
+
+void cpu::set_x(int val) {
+    x = (val & 0xff);
+}
+
+void cpu::set_acc(int val) {
+    acc = (val & 0xff);
 }
 
 inline void cpu::push2(unsigned int val) {

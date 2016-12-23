@@ -16,6 +16,7 @@ public:
     virtual int changed_crom();
     virtual void ppu_change(unsigned int cycle, unsigned int addr, unsigned int val);
     virtual rom::ppu_change_t cycle_forward(unsigned int cycle);
+    virtual void reset_map();
 protected:
     rom * cart;
 };

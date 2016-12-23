@@ -293,6 +293,21 @@ const std::string& rom::filename() {
     return file;
 }
 
+const int rom::get_song_count() {
+    if(nsf) return song_count;
+    return 0;
+}
+
+const int rom::get_default_song() {
+    if(nsf) return song_index;
+    return 0;
+}
+
+const unsigned int rom::get_header(int addr) {
+    if(addr >= header.size()) return 0;
+    else return header[addr];
+}
+
 void rom::print_info() {
     std::cout<<"Filename: "<<file.c_str()<<std::endl;
     std::cout<<"Filesize: "<<filesize<<std::endl;

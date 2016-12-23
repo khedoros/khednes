@@ -25,8 +25,11 @@ public:
         ~rom();
         bool isValid();
         bool isNSF();
+        int get_song_count();
+        int get_default_song();
         void print_info();
         void print_nsf_info();
+        const unsigned int get_header(int);
         const unsigned int get_rst_addr();
         const unsigned int get_nmi_addr();
         const unsigned int get_irq_addr();
