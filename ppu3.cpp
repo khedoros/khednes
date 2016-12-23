@@ -457,7 +457,8 @@ unsigned char ppu::reg_read(const unsigned int addr, unsigned int cycle) {
         if(control0.v_inc_down) vram_ptr.pointer +=31;
         break;
     default:
-        cout<<"Reading from register 0x"<<hex<<addr<<" isn't handled."<<dec<<endl;
+        //cout<<"Reading from register 0x"<<hex<<addr<<" isn't handled."<<dec<<endl;
+        retval = control1.reg;
         break;
     }
     ++s.reads;

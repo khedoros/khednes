@@ -265,9 +265,11 @@ bool rom::load_nsf(std::string& filename) {
     }
 
     if(uses_banks) {
+        std::cout<<std::hex<<load_addr<<"\t"<<filesize-0x80<<" "<<filesize/0x1000<<filesize % 0x1000<<std::endl;
         load_addr &= 0xfff;
         size_t prom_size = filesize - 0x80 + (load_addr&0xFFF);
-        assert(prom_size > 0 && prom_size + 0x8000 > rst_addr);
+        //assert(prom_size > 0 && prom_size + 0x8000 > rst_addr);
+        if(prom_size < 0x8000) prom_size = 0x8000;
         prom.resize(prom_size, 0);
         for(int i=0;i<8;++i) {
             map->put_pbyte(0, header[0x70+i], 0x5ff8+i);
@@ -281,7 +283,6 @@ bool rom::load_nsf(std::string& filename) {
         prom.resize(prom_size, 0);
         //prom.resize(0x8000,0);
     }
-    prom_pages = (prom.size() / PRG_PAGE_SIZE) + 1;
     std::cout<<"PROM size: "<<std::dec<<prom.size()<<"(0x"<<std::hex<<prom.size()<<")"<<std::endl;
     prom_w.resize(prom.size());
 
@@ -296,6 +297,7 @@ bool rom::load_nsf(std::string& filename) {
     filein.close();
 
     nsf = true;
+    sram = true;
 
     return true;
 }

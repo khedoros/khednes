@@ -1,38 +1,31 @@
 #include "mapper_nsf.h"
+#include<cstdio>
 
 mapper_nsf::mapper_nsf(rom* r) : mapper(r) {
     cart = r;
     reset_map();
 }
 const unsigned int mapper_nsf::get_pbyte(const unsigned int addr) {
-    if(cart->prom_pages > 1) return cart->prom[addr-0x8000];
-    else if(addr < 0xC000)
-        return cart->prom[addr-0x8000];
-    else
-        return cart->prom[addr-0xC000];
+    int segment = (addr / 0x1000) - 8;
+    int offset = addr % 0x1000;
+    return cart->prom[bank[segment]*0x1000 + offset];
 }
 
 const unsigned int mapper_nsf::get_pword(const unsigned int addr) {
-    if(cart->prom_pages > 1) return cart->prom_w[addr-0x8000];
-    else if(addr < 0xC000) {
-        //std::cout<<"Reading: 0x"<<std::hex<<addr<<" (0x"<<(addr-0x8000+prg_lo_offset)<<")"<<std::endl;
-        return cart->prom_w[addr-0x8000];
-    }
-    else {
-        //std::cout<<"Reading: 0x"<<std::hex<<addr<<" (0x"<<(addr-0xc000+prg_hi_offset)<<")"<<std::endl;
-        return cart->prom_w[addr-0xC000];
-    }
+    int segment = (addr / 0x1000) - 8;
+    int offset = addr % 0x1000;
+    return cart->prom_w[bank[segment]*0x1000 + offset];
 }
 
 const unsigned int mapper_nsf::get_cbyte(const unsigned int addr) {
-    if(addr>=8192) {
-        std::cout<<"Trying to get CHR byte at address: "<<addr<<std::endl;
-        return 0;
-    }
-    return cart->crom[addr];
+    return 0;
 }
 
 void mapper_nsf::put_pbyte(const unsigned int cycle, const unsigned int val,const unsigned int addr) {
+    if(addr>=0x5ff8 && addr <= 0x5fff) {
+        bank[addr - 0x5ff8] = val;
+    }
+    printf("%02x %02x %02x %02x %02x %02x %02x %02x\n", bank[0], bank[1], bank[2], bank[3], bank[4], bank[5], bank[6], bank[7]);
 }
 
 bool mapper_nsf::put_cbyte(const unsigned int val,const unsigned int addr) {

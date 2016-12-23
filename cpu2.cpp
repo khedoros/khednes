@@ -777,6 +777,10 @@ const int cpu::run_next_op() {
 
     switch(nextop) {
     case 0x00://BRK
+        if(nsf_mode) {
+            std::cout<<"NSF files shouldn't be running BRK"<<std::endl;
+            return -1;
+        }
         imp();
         op_brk();
         break;
@@ -1028,7 +1032,12 @@ const int cpu::run_next_op() {
         break;
     case 0x60://RTS
         imp();
-        if(nsf_mode&&rec_depth==0) return 0;
+        if(nsf_mode/*&&rec_depth==0*/) {
+            int tempaddr=pop2();
+            sp-=2;
+            if(!tempaddr)
+                return 0;
+        }
         rec_depth--;
         op_rts();
         break;

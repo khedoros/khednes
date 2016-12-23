@@ -316,8 +316,13 @@ void mem::write(unsigned int address, unsigned char val) {
             cart.put_pbyte(cycle, val,address);
         }
         else {
-                printf("Hey! Don't try to write %02x to %04x!!\n",val,address);
-                util::debug(ORIGIN,"I don't know what writing %02x to %04x does.\n",val,address);
+                if(cart.isNSF()) {
+                    cart.put_pbyte(cycle, val, address);
+                }
+                else {
+                    printf("Hey! Don't try to write %02x to %04x!!\n",val,address);
+                    util::debug(ORIGIN,"I don't know what writing %02x to %04x does.\n",val,address);
+                }
         }
 }
 

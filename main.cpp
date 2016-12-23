@@ -475,12 +475,20 @@ exit_poll_loop:
         if(!paused) {
             //cout<<"Running the CPU"<<endl;
             int cpu_ret = 1;
+            int cycle_count = 0;
+            bool reset = true;
             while(cpu_ret && cpu_ret > 0) {
                 cpu_ret=cpui.run_next_op();
+                cycle_count += (3*cpu_ret);
+                //if(cycle_count > CLK_PER_FRAME) { 
+                //    reset = false;
+                //    break;
+                //}
             }
 
-            cpui.reset(cart.get_nmi_addr());
-            cpui.increment_frame();
+            if(reset) {
+                cpui.reset(cart.get_nmi_addr());
+            }
 
             //cout<<"Ran the CPU"<<endl;
             if(cpu_ret < 0) {
@@ -508,6 +516,7 @@ exit_poll_loop:
         //cout<<"Timing two"<<endl;
         int now = SDL_GetTicks();
         frame++;
+        cpui.increment_frame();
         int delay = pstart + int(double(frame) * double(1000) / double(60)) - now;
         //cout<<"Frame: "<<frames<<" now: "<<now<<" delay: "<<delay<<endl;       
         if(delay > 0) {
