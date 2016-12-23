@@ -429,7 +429,7 @@ exit_poll_loop:
                 }
                 else if(event.key.keysym.scancode==SDL_SCANCODE_D) {
                     choice++;
-                    if(choice>cart.get_song_count()) choice = 1;
+                    if(choice > (int)cart.get_song_count()) choice = 1;
                     SDL_PauseAudioDevice(apui.get_id(), true);
                     init_nsf(cart, memi, cpui, choice);
                     SDL_PauseAudioDevice(apui.get_id(), false);
