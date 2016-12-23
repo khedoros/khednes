@@ -33,7 +33,7 @@ rom::rom(std::string filename, int m) : file(filename), mapper_num(m) {
 }
 
 int rom::mapper_guess() {
-    bool possible[256] = {true};
+    //bool possible[256] = {true};
     return 1;
 }
 
@@ -287,7 +287,7 @@ bool rom::load_nsf(std::string& filename) {
     prom_w.resize(prom.size());
 
     filein.read(reinterpret_cast<char*>(&prom[load_addr-0x8000]),filesize-0x80);
-    for(int i=0;i<prom.size()-1;++i) {
+    for(unsigned int i=0;i<prom.size()-1;++i) {
         prom_w[i] = prom[i] | (prom[i+1]<<(8));
     }
 
