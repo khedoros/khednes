@@ -153,8 +153,14 @@ int main(int argc, char ** argv) {
     mem memi(cart,ppui,apui);
     apui.setmem(&memi);
     //cout<<"Memory started. Going to start CPU"<<endl;
-    cpu cpui(&memi,&apui,memi.get_rst_addr());
+    cpu cpui(&memi,&apui,memi.get_rst_addr(), cart.isNSF());
     //cout<<"CPU started."<<endl;
+
+    if(cart.isNSF()) {
+        cout<<"Starting NSF player instead of main emulator"<<endl;
+        return run_nsf(cart, apui, memi, cpui);
+    }
+
     bool paused=false;
     //int time_stop;
     //long total_time;
@@ -341,4 +347,122 @@ int main(int argc, char ** argv) {
         }
     }
     return 0;
+}
+
+void init_nsf(rom& cart, mem& memi, cpu& cpui) {
+    int choice = 0;
+    while(choice < 1 || choice > cart.get_song_count()) {
+        cout<<"Choose a song number between 1 and "<<cart.get_song_count()<<": ";
+        cin>>choice;
+    }
+    cpui.reset(cart.get_rst_addr());
+    cpui.set_acc(choice-1);
+    cpui.set_x(0);
+    for(int i=0;i<0x800;++i)
+        memi.write(i,0);
+    for(int i=0x6000;i<0x8000;++i)
+        memi.write(i,0);
+    for(int i=0x4000;i<0x4014;++i)
+        memi.write(i,0);
+    memi.write(0x4015, 0x0f);
+    memi.write(0x40, 0x4017);
+    cart.reset_map();
+    while(cpui.run_next_op()) {}
+}
+
+int run_nsf( rom& cart, apu& apui, mem& memi, cpu& cpui) {
+    bool paused=false;
+    int pstart = SDL_GetTicks();
+    while (1==1) {
+        SDL_Event event;
+        while(SDL_PollEvent(&event)){  /* Loop until there are no events left on the queue */
+            switch(event.type){  /* Process the appropiate event type */
+            case SDL_KEYDOWN:  /* Handle a KEYDOWN event */         
+                if(event.key.keysym.scancode==SDL_SCANCODE_Q||
+                  (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_RCTRL))||
+                  (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_LCTRL))) {
+                    printf("You pressed q or ctrl-c. Exiting.\n");
+                    cpui.print_details();
+                    //SDL_PauseAudio(true);
+                    cout<<"Calling SDL_Quit()"<<endl;
+                    SDL_Quit();
+                    cout<<"Called SDL_Quit()"<<endl;
+                    return 0;
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_R) {
+                    cpui.reset(memi.get_rst_addr());
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_P) {
+                    paused=!paused;
+                    if(paused)
+                        printf("Paused emulation.\n");
+                    else
+                        printf("Unpaused emulation.\n");
+                }
+                else {
+                    //printf("Keydown\n");
+                    //printf("Time: %d\n",SDL_GetTicks());
+                }
+                break;
+            case SDL_KEYUP: /* Handle a KEYUP event*/
+                //printf("Keyup\n");
+                break;
+            case SDL_QUIT:
+                //SDL_PauseAudio(true);
+                SDL_Quit();
+                cpui.print_details();
+                printf("%d frames rendered in %f seconds. (%f FPS)\n",ppui.get_frame(),float(clock())/float(CLOCKS_PER_SEC),float(ppui.get_frame())/(float(clock())/float(CLOCKS_PER_SEC)));
+                return 0;
+                break;
+            default: /* Report an unhandled event */
+                //printf("I don't know what this event is! Flushing it.\n");
+                SDL_FlushEvent(event.type);
+                break;
+            }
+        }
+        if(!paused) {
+            //cout<<"Running the CPU"<<endl;
+            int cpu_ret=cpui.run_ops();
+            //cout<<"Ran the CPU"<<endl;
+            if(cpu_ret < 0) {
+                return 1;
+            }
+            else {
+                //cout<<"Frame "<<ppui.get_frame()<<endl;
+
+                int apu_id = apui.get_id();
+                if(apu_id > 0) {
+                    //cout<<"Locking audio...";
+                    SDL_LockAudioDevice(apu_id);
+                    //cout<<"done."<<endl;
+                    apui.set_frame(ppui.get_frame());
+                    apui.gen_audio();
+                    //apui.dat.buffered += 735; Dude, do this in gen_audio, not here =/
+                    //cout<<"Unlocking audio...";
+                    SDL_UnlockAudioDevice(apu_id);
+                    //cout<<"done."<<endl;
+                }
+                //cout<<SDL_GetTicks()<<": Frame: "<<ppui.get_frame()<<" Write pos: "<<apui.write_pos<<endl;
+                //cout<<"Running the PPU"<<endl;
+                int ppu_ret=ppui.calc();
+                //cout<<"Ran the PPU"<<endl;
+                if(ppu_ret>0) {
+                    if(ppu_ret==1) {
+                        //cout<<"Triggering NMI in CPU"<<endl;
+                        cpui.trigger_nmi();
+                    }
+                }
+            }
+        }
+
+        //Calculates the time that the frame should end at, and delays until that time
+        //cout<<"Timing two"<<endl;
+        int frames = ppui.get_frame();
+        int now = SDL_GetTicks();
+        int delay = pstart + int(double(frames) * double(1000) / double(60)) - now;
+        //cout<<"Frame: "<<frames<<" now: "<<now<<" delay: "<<delay<<endl;       
+        if(delay > 0) {
+            SDL_Delay(delay);
+        }
+    }
 }
