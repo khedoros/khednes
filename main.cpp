@@ -480,6 +480,8 @@ exit_poll_loop:
             while(cpu_ret && cpu_ret > 0) {
                 cpu_ret=cpui.run_next_op();
                 cycle_count += (3*cpu_ret);
+                if(cycle_count >= CLK_PER_FRAME) cycle_count -= CLK_PER_FRAME;
+                cpui.set_ppu_cycle(cycle_count);
                 //if(cycle_count > CLK_PER_FRAME) { 
                 //    reset = false;
                 //    break;

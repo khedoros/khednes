@@ -30,6 +30,7 @@ public:
         void trigger_irq();
         void reset(int);
         void increment_frame();
+        void set_ppu_cycle(int);
         void set_acc(int);
         void set_x(int);
         void print_details();

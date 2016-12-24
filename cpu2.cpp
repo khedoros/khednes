@@ -1582,8 +1582,13 @@ void cpu::set_acc(int val) {
     acc = (val & 0xff);
 }
 
+void cpu::set_ppu_cycle(int cycle) {
+    ppu_cycle = cycle;
+}
+
 void cpu::increment_frame() {
     frame++;
+    memory->set_frame(frame);
 }
 
 inline void cpu::push2(unsigned int val) {
