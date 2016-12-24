@@ -25,7 +25,7 @@ void mapper_nsf::put_pbyte(const unsigned int cycle, const unsigned int val,cons
     if(addr>=0x5ff8 && addr <= 0x5fff) {
         bank[addr - 0x5ff8] = val;
     }
-    printf("%02x %02x %02x %02x %02x %02x %02x %02x\n", bank[0], bank[1], bank[2], bank[3], bank[4], bank[5], bank[6], bank[7]);
+    //printf("%02x %02x %02x %02x %02x %02x %02x %02x\n", bank[0], bank[1], bank[2], bank[3], bank[4], bank[5], bank[6], bank[7]);
 }
 
 bool mapper_nsf::put_cbyte(const unsigned int val,const unsigned int addr) {

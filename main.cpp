@@ -367,7 +367,7 @@ unsigned int get_choice(rom& cart) {
     return choice;
 }
 
-bool init_nsf(rom& cart, mem& memi, cpu& cpui, unsigned int choice = 0) {
+bool init_nsf(rom& cart, mem& memi, cpu& cpui, unsigned int choice = 1) {
     cout<<"Playing song "<<dec<<choice<<" out of "<<cart.get_song_count()<<endl;
     cpui.reset(cart.get_rst_addr());
     cpui.set_acc(choice-1);
@@ -394,8 +394,8 @@ bool init_nsf(rom& cart, mem& memi, cpu& cpui, unsigned int choice = 0) {
 int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
     bool paused=false;
     int frame = 0;
-    int choice = get_choice(cart);
-    bool success = init_nsf(cart, memi, cpui,choice);
+    int choice = cart.get_default_song() + 1; //get_choice(cart);
+    bool success = init_nsf(cart, memi, cpui, choice);
     if(!success) {
         cout<<"Failed to init nsf."<<endl;
         return 1;
@@ -437,7 +437,7 @@ exit_poll_loop:
                 }
                 else if(event.key.keysym.scancode==SDL_SCANCODE_R) {
                     SDL_PauseAudioDevice(apui.get_id(), true);
-                    init_nsf(cart,memi,cpui);
+                    init_nsf(cart,memi,cpui, choice);
                     SDL_PauseAudioDevice(apui.get_id(), false);
                     goto exit_poll_loop;
                 }

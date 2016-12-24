@@ -298,6 +298,7 @@ inline void cpu::op_jsr(int addr) {
     //REASON: RTS pops the stack to the PC, THEN increments PC by 1
     snprintf(assem_op,14,"JSR %04x     ",addr);
     rec_depth++;
+    //printf("JSR from %04x to %04x\n", pc, addr);
     pc--;
     push2(pc);
     pc=addr;
@@ -365,7 +366,9 @@ inline void cpu::op_sec() {
 
 inline void cpu::op_rti() {
     status.reg=pop();
+    //printf("RTI from %04x to ", pc);
     pc=pop2();
+    //printf("%04x\n", pc);
     snprintf(assem_op,14,"RTI: %04x     ",pc);
 }
 
@@ -422,8 +425,11 @@ inline void cpu::op_cli() {
 }
 
 inline void cpu::op_rts() {
+    //printf("RTS from %04x to ", pc);
     pc=pop2();
+    //printf("%04x\n", pc);
     snprintf(assem_op,14,"RTS (%04x)   ",pc);
+    rec_depth--;
     pc++;
 }
 
@@ -946,6 +952,9 @@ const int cpu::run_next_op() {
         op_rolm(addr);
         break;
     case 0x40://RTI
+        if(nsf_mode) {
+            return 0;
+        }
         //if(nsf_mode) return 0;
         imp();
         op_rti();
@@ -1032,13 +1041,14 @@ const int cpu::run_next_op() {
         break;
     case 0x60://RTS
         imp();
-        if(nsf_mode/*&&rec_depth==0*/) {
+        if(nsf_mode) {
             int tempaddr=pop2();
             sp-=2;
-            if(!tempaddr)
+            if(tempaddr<0x8000)
+                return 0;
+            else if(rec_depth==0)
                 return 0;
         }
-        rec_depth--;
         op_rts();
         break;
     case 0x61://ADC IND X

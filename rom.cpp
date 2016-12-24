@@ -254,10 +254,6 @@ bool rom::load_nsf(std::string& filename) {
         return false;
     }
 
-    if(header[0x07b]) {
-        printf("Extra sound chip support specified, and I don't currently support that.\n");
-    }
-
     uses_banks = false;
     map = new mapper_nsf(this);
     for(int i=0;i<8;++i) {
@@ -367,6 +363,12 @@ void rom::print_nsf_info() {
     printf("Init Insertion point: %04x\n",rst_addr);
     printf("Load Insertion point: %04x\n",load_addr);
     printf("Tick Insertion point: %04x\n",nmi_addr);
+    printf("Extra hardware flag: %02x", header[0x7b]);
+    if(header[0x07b]) {
+        printf(" (Extra sound chip support specified, and I don't currently support that.)");
+    }
+    printf("\n");
+
     printf("Songs in file: %d\n", song_count);
     printf("Starting song: %d\n", song_index+1);
     printf("Load addr: %04x\nInit addr: %04x\nPlay addr: %04x\n", load_addr, rst_addr, nmi_addr);
