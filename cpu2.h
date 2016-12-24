@@ -182,5 +182,4 @@ private:
         const static int FLAG_SIGN=0x80;
 
         bool nsf_mode;
-        int rec_depth;
 };

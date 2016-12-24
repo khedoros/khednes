@@ -477,17 +477,18 @@ exit_poll_loop:
             int cpu_ret = 1;
             int cycle_count = 0;
             bool reset = true;
+            //cout<<"Frame "<<dec<<frame<<" start"<<endl;
             while(cpu_ret && cpu_ret > 0) {
                 cpu_ret=cpui.run_next_op();
                 cycle_count += (3*cpu_ret);
-                if(cycle_count >= CLK_PER_FRAME) cycle_count -= CLK_PER_FRAME;
                 cpui.set_ppu_cycle(cycle_count);
-                //if(cycle_count > CLK_PER_FRAME) { 
-                //    reset = false;
-                //    break;
-                //}
+                if(cycle_count >= CLK_PER_FRAME) { 
+                    cycle_count -= CLK_PER_FRAME;
+                    reset = false;
+                    break;
+                }
             }
-
+            //cout<<"Frame "<<dec<<frame<<" end"<<endl;
             if(reset) {
                 cpui.reset(cart.get_nmi_addr());
             }

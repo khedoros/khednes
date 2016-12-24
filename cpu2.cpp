@@ -15,7 +15,7 @@ void cpu::debug_dummy(const char *,...) {
     return;
 }
 
-cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf), rec_depth(0) {
+cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf) {
     for(int i=0;i<256;++i) {
         inst_counts[i]=0;
     }
@@ -297,7 +297,6 @@ inline void cpu::op_jsr(int addr) {
     //saves address immediately BEFORE the one I want to return to!!!
     //REASON: RTS pops the stack to the PC, THEN increments PC by 1
     snprintf(assem_op,14,"JSR %04x     ",addr);
-    rec_depth++;
     //printf("JSR from %04x to %04x\n", pc, addr);
     pc--;
     push2(pc);
@@ -429,7 +428,6 @@ inline void cpu::op_rts() {
     pc=pop2();
     //printf("%04x\n", pc);
     snprintf(assem_op,14,"RTS (%04x)   ",pc);
-    rec_depth--;
     pc++;
 }
 
@@ -1044,10 +1042,10 @@ const int cpu::run_next_op() {
         if(nsf_mode) {
             int tempaddr=pop2();
             sp-=2;
-            if(tempaddr<0x8000)
+            if(tempaddr<0x8000) {
+                //printf("Returning because proposed return address is %04x\n", tempaddr);
                 return 0;
-            else if(rec_depth==0)
-                return 0;
+            }
         }
         op_rts();
         break;
