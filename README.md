@@ -24,6 +24,8 @@ pause: p
 
 reset: r
 
+Zapper emulation: click the mouse in the window. The emulation is currently...well, bad. I assumed that the light sensor signal would directly sense light, but that's not how it works. There's an extra signal demodulation step, tuned to the pixel clock on a CRT.
+
 ##NSF player keys
 previous and next: a and d
 
