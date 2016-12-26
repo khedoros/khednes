@@ -13,12 +13,12 @@ class mapper_011;
 class mapper_nsf;
 
 class rom {
-friend mapper;
-friend mapper_001;
-friend mapper_002;
-friend mapper_003;
-friend mapper_011;
-friend mapper_nsf;
+friend class mapper;
+friend class mapper_001;
+friend class mapper_002;
+friend class mapper_003;
+friend class mapper_011;
+friend class mapper_nsf;
 
 public:
         rom(std::string filename, int mapper);

@@ -324,7 +324,7 @@ void apu::clock_full() {
 }
 
 void apu::clock_every() {
-    if(!enabled[DMC]) {
+    if(!enabled[DMC]||!dmc_length) {
         //cout<<"returning"<<endl;
         return;
     }
@@ -366,9 +366,13 @@ void apu::clock_every() {
                     enabled[DMC] = false;
                     return;
                 }
-                else {
-                    dmc_cur_byte = memi->read(dmc_addr);
+                else if (dmc_addr==dmc_addr_reset+dmc_length) {
+                    dmc_addr = dmc_addr_reset;
+                    dmc_bit = 0;
+                    dmc_freq_cnt = dmc_freq;
                 }
+                //Grab the next byte both if we're not done going through samples and if we're done, but looping.
+                dmc_cur_byte = memi->read(dmc_addr);
             }
         }
     }
@@ -558,7 +562,8 @@ void apu::reg_dequeue() {
                 dmc_loop = ((val&0x40) > 0);
                 dmc_gen_irq = ((val >= 0x80) && !dmc_loop);
                 dmc_freq = dmc_freq_table[val&0x0f]/8;
-                dmc_freq_cnt = dmc_freq/8;
+                dmc_freq_cnt = dmc_freq;
+                //cout<<"0x4010: Loop: "<<dmc_loop<<" gen_irq: "<<dmc_gen_irq<<" freq: "<<dmc_freq<<endl;
                 if(dmc_gen_irq) cerr<<"DMC can't generate an IRQ, so this game may not work right."<<endl;
                 break;
             case 0x11:
@@ -575,17 +580,18 @@ void apu::reg_dequeue() {
             case 0x13:
                 //cout<<"0x4013: DMC length val: "<<hex<<((int(val))<<(4))<<endl;
                 dmc_length = ((int(val))<<(4));
+                if(!dmc_length) enabled[DMC] = false;
                 break;
             case 0x15: {
                 //cout<<"Set 0x15 to "<<val<<endl;
                 status_reg a;
                 a.val = val;
-                enabled[0] = a.sq1_on;
-                enabled[1] = a.sq2_on;
-                enabled[2] = a.tri_on;
-                enabled[3] = a.noise_on;
-                enabled[4] = a.dmc_on;
-                //if(enabled[4]) cout<<"0x4015 DMC enabled"<<endl;
+                enabled[SQ1] = a.sq1_on;
+                enabled[SQ2] = a.sq2_on;
+                enabled[TRI] = a.tri_on;
+                enabled[NOISE] = a.noise_on;
+                enabled[DMC] = a.dmc_on;
+                //if(enabled[DMC]) cout<<"0x4015 DMC enabled"<<endl;
                 //else           cout<<"0x4015 DMC disabled"<<endl;
                 pin1_enabled = a.sq1_on + a.sq2_on;
                 pin2_enabled = a.tri_on + a.noise_on + a.dmc_on;
@@ -603,6 +609,7 @@ void apu::reg_dequeue() {
                     framecounter_reset = 89490;
                 }
                 enable_irq = !a.irq_disable;
+                //cout<<"0x4017: IRQ enable: "<<enable_irq<<endl;
                 counter_mode = a.counter_mode;
                 framecounter_pos = 0;
                 }
@@ -731,7 +738,7 @@ const int apu::noise_duty() {
     if(enable_decay[NOISE]) retval = noise_states[duty_cycle[NOISE]][wave_pos[NOISE]] * decay_vol_lvl[NOISE];
     else                    retval = noise_states[duty_cycle[NOISE]][wave_pos[NOISE]] * vol[NOISE];
     //cout<<"wave_pos[NOISE]: "<<wave_pos[NOISE]<<endl;
-    return retval;
+    return ((retval*3)/4);
 }
 
 apu::~apu() {
