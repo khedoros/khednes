@@ -12,19 +12,20 @@ class mem {
 public:
     mem(rom & romi,ppu & ppui,apu & apui);
     ~mem();
-    void set_cycle(unsigned int cycle);
-    void set_frame(unsigned int frame);
-    const unsigned int read(unsigned int address);
-    const unsigned int read2(unsigned int);
-    void write(unsigned int address, unsigned char val);
+    void set_cycle(const unsigned int cycle);
+    void set_frame(const unsigned int frame);
+    const unsigned int read(const unsigned int address);
+    const unsigned int read2(const unsigned int);
+    const unsigned int get_page(const unsigned int);
+    void write(const unsigned int address, const unsigned char val);
     const unsigned int get_rst_addr();
     const unsigned int get_nmi_addr();
     const unsigned int get_irq_addr();
     void sendkeydown(SDL_Scancode test);
     void sendkeyup(SDL_Scancode test);
-    void sendmousedown(int x, int y);
-    void sendmouseup(int x, int y);
-    void sendmousepos(int x, int y);
+    void sendmousedown(const int x, const int y);
+    void sendmouseup(const int x, const int y);
+    void sendmousepos(const int x, const int y);
     const unsigned int get_ppu_cycles(const unsigned int frame);
 
 private:

@@ -2,7 +2,7 @@
 #include "rom.h"
 #include "mapper.h"
 
-//Implements Mapper #0 (aka "No mapper"), and provides the base class for other, more complex mappers.
+//Implements the NSF audio format mapper
 class mapper_nsf : public mapper {
 protected:
     typedef enum {

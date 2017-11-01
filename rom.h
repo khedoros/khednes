@@ -37,6 +37,7 @@ public:
         const unsigned int get_pbyte(const unsigned int addr);
         const unsigned int get_pword(unsigned int);
         const unsigned int get_cbyte(const unsigned int addr);
+        const unsigned int get_page(const unsigned int addr);
         const unsigned int mmc1_readp(const unsigned int addr);
         bool put_cbyte(const unsigned int val,const unsigned int addr);
         void put_pbyte(const unsigned int cycle, const unsigned int val,const unsigned int addr);

@@ -410,6 +410,10 @@ const unsigned int rom::get_pword(const unsigned int addr) {
     return map->get_pword(addr);
 }
 
+const unsigned int rom::get_page(const unsigned int addr) {
+    return map->get_page(addr);
+}
+
 //returns raw character byte. Mainly used for register-based PPU access, and regenerating the
 //rendering tables stored in the ppu class.
 const unsigned int rom::get_cbyte(const unsigned int addr) {
@@ -446,3 +450,4 @@ rom::ppu_change_t rom::cycle_forward(unsigned int cycle) {
 void rom::reset_map() {
     map->reset_map();
 }
+

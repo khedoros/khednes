@@ -276,6 +276,10 @@ const unsigned int mem::read2(unsigned int address) {
         return 0;
 }
 
+const unsigned int mem::get_page(const unsigned int address) {
+    return cart.get_page(address);
+}
+
 void mem::write(unsigned int address, unsigned char val) {
         address&=0xFFFF;
         written_to[address]=true;

@@ -117,3 +117,13 @@ rom::ppu_change_t mapper_011::cycle_forward(unsigned int cycle) {
     }
     return changes;
 }
+
+const unsigned int mapper_011::get_page(const unsigned int addr) {
+    if(addr < 0xc000) {
+        return prg_lo_offset / PRG_PAGE_SIZE;
+    }
+    else {
+        return prg_hi_offset / PRG_PAGE_SIZE;
+    }
+}
+

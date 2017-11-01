@@ -44,3 +44,13 @@ int mapper_002::changed_crom() {
     cart->updated_crom = 0;
     return retval;
 }
+
+const unsigned int mapper_002::get_page(const unsigned int addr) {
+    if(addr < 0xc000) {
+        return prg_lo_offset / PRG_PAGE_SIZE;
+    }
+    else {
+        return prg_hi_offset / PRG_PAGE_SIZE;
+    }
+}
+

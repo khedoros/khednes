@@ -52,3 +52,12 @@ rom::ppu_change_t mapper::cycle_forward(unsigned int cycle) {
 }
 
 void mapper::reset_map() {}
+
+const unsigned int mapper::get_page(const unsigned int addr) {
+    if(addr < 0xc000) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+}

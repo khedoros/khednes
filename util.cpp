@@ -95,3 +95,12 @@ int util::debug(const char * fmt,...) {
     va_start(ap,fmt);
     return vprintf(fmt,ap);
 }
+
+std::string util::inst_string(int byte0, int byte1, int byte2) {
+    if(byte0 >= 0 && byte0 < 256) {
+        return inst_names[byte0];
+    }
+    else {
+        return string("Bad opcode");
+    }
+}
