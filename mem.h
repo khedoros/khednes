@@ -17,6 +17,7 @@ public:
     const unsigned int read(const unsigned int address);
     const unsigned int read2(const unsigned int);
     const unsigned int get_page(const unsigned int);
+    const std::string& get_filename();
     void write(const unsigned int address, const unsigned char val);
     const unsigned int get_rst_addr();
     const unsigned int get_nmi_addr();

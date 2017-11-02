@@ -1,6 +1,7 @@
 #include "cpu2.h"
 #include "util.h"
 #include <iostream>
+#include <fstream>
 #define ORIGIN 1
 using namespace std;
 
@@ -53,7 +54,7 @@ cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_
     }
 }
 
-void cpu::print_details() {
+void cpu::print_details(const std::string& filename) {
     int total=0;
     int count=0;
 
@@ -66,11 +67,43 @@ void cpu::print_details() {
     }
     printf("Total of %d instructions invoked a total of %d times.\n",count,total);
 
+    if(filename == "") return;
+    ifstream rom(filename);
+    bool print_insts = true;
+    size_t filesize = 0;
+    Vect<uint8_t> data;
+    if(!rom.is_open()) {
+        print_insts = false;
+        cout<<"wtf couldn't open "<<filename<<" grrrr"<<endl;
+    }
+    else {
+        cout<<"Opened "<<filename<<". ";
+        rom.seekg(0,ios::end);
+        filesize = rom.tellg() - streampos(16);
+        cout<<"Going to read "<<dec<<filesize<<" bytes from it."<<endl;
+        rom.seekg(16,ios::beg);
+        data.resize(filesize);
+        rom.read(reinterpret_cast<char *>(&data[0]), filesize);
+        rom.close();
+        cout<<"Read the data. Closed the file."<<endl;
+    }
+    cout.flush();
     int addr_count = 0;
     for(int i=0;i<16;++i) {
         for(int j=0;j<PRG_PAGE_SIZE;++j) {
             if(addresses[i][j]) {
-                printf("%02X:%04X\n",i,j);
+                if(print_insts) {
+                    int base = i * PRG_PAGE_SIZE + j;
+                    if(base < data.size()) {
+                        printf("cool %02X:%04X\t%s\n",i,j,(util::inst_string(data[base],data[base+1],data[base+2])).c_str());
+                    }
+                    else {
+                        printf("%02X:%04X is outside the file.\n",i,j);
+                    }
+                }
+                else {
+                    printf("boring %02X:%04X\n",i,j);
+                }
                 addr_count++;
             }
         }

@@ -280,6 +280,10 @@ const unsigned int mem::get_page(const unsigned int address) {
     return cart.get_page(address);
 }
 
+const std::string& mem::get_filename() {
+    return cart.filename();
+}
+
 void mem::write(unsigned int address, unsigned char val) {
         address&=0xFFFF;
         written_to[address]=true;

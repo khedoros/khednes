@@ -235,7 +235,7 @@ int main(int argc, char ** argv) {
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_RCTRL))||
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_LCTRL))) {
                     printf("You pressed q or ctrl-c. Exiting.\n");
-                    cpui.print_details();
+                    cpui.print_details(filename);
                     printf("%d frames rendered in %f seconds. (%f FPS)\n",ppui.get_frame(),float(clock())/float(CLOCKS_PER_SEC),float(ppui.get_frame())/(float(clock())/float(CLOCKS_PER_SEC)));
                     //SDL_PauseAudio(true);
                     cout<<"Calling SDL_Quit()"<<endl;
@@ -306,7 +306,7 @@ int main(int argc, char ** argv) {
             case SDL_QUIT:
                 //SDL_PauseAudio(true);
                 SDL_Quit();
-                cpui.print_details();
+                cpui.print_details(filename);
                 printf("%d frames rendered in %f seconds. (%f FPS)\n",ppui.get_frame(),float(clock())/float(CLOCKS_PER_SEC),float(ppui.get_frame())/(float(clock())/float(CLOCKS_PER_SEC)));
                 return 0;
                 break;
@@ -419,7 +419,7 @@ exit_poll_loop:
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_RCTRL))||
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_LCTRL))) {
                     printf("You pressed q or ctrl-c. Exiting.\n");
-                    cpui.print_details();
+                    cpui.print_details("");
                     //SDL_PauseAudio(true);
                     cout<<"Calling SDL_Quit()"<<endl;
                     SDL_Quit();
@@ -470,7 +470,7 @@ exit_poll_loop:
             case SDL_QUIT:
                 //SDL_PauseAudio(true);
                 SDL_Quit();
-                cpui.print_details();
+                cpui.print_details("");
                 return 0;
                 break;
             default: /* Report an unhandled event */

@@ -123,6 +123,7 @@ std::string util::inst_string(int byte0, int byte1, int byte2) {
         case zpix://zero-page indirect, x-pre-indexed
         case zpiy: //zero-page indirect, y-post-indexed
         default:
+            break;
             return std::string("Don't know how you got here.");
     }
     return inst;

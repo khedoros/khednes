@@ -33,7 +33,7 @@ public:
         void set_ppu_cycle(int);
         void set_acc(int);
         void set_x(int);
-        void print_details();
+        void print_details(const std::string&);
 private:
         void debug_dummy(int,const char *,...);
         void debug_dummy(const char *,...);
