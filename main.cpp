@@ -138,8 +138,11 @@ int main(int argc, char ** argv) {
     SDL_Joystick * js = NULL;
     int jscount = SDL_NumJoysticks();
     if(jscount > 0) {
-        const char * name = SDL_JoystickNameForIndex(0);
-        cout<<"Found joystick: "<<name<<endl;
+        for(int i=0;i<jscount;++i) {
+            const char * name = SDL_JoystickNameForIndex(i);
+            cout<<"Found joystick: "<<name<<endl;
+        }
+        cout<<"Just opening joystick 0 though"<<endl;
         js = SDL_JoystickOpen(0);
     }
 
@@ -189,6 +192,7 @@ int main(int argc, char ** argv) {
                 int button = int(event.jbutton.button);
                 int state = int(event.jbutton.state);
                 //cout<<"Button: "<<state<<" state: "<<state<<endl;
+                cout<<"Saw button: "<<button<<endl;
                 switch(button) {
                 case 0: sc = SDL_SCANCODE_L; break;
                 case 1: sc = SDL_SCANCODE_K; break;
@@ -208,12 +212,15 @@ int main(int argc, char ** argv) {
                 break;
             case SDL_JOYDEVICEADDED:
             case SDL_CONTROLLERDEVICEADDED:
-                cout<<"Added joystick: "<<SDL_JoystickNameForIndex(event.jdevice.which)<<endl;
+                cout<<"Added joystick "<<event.jdevice.which<<": "<<SDL_JoystickNameForIndex(event.jdevice.which)<<endl;
                 if(js) {
                     SDL_JoystickClose(js);
                     js = NULL;
                 }
-                js = SDL_JoystickOpen(event.jdevice.which);
+                if(!js) {
+                    cout<<"No joystick previously connected, so I'm using that one."<<endl;
+                    js = SDL_JoystickOpen(event.jdevice.which);
+                }
                 break;
             case SDL_JOYDEVICEREMOVED:
             case SDL_CONTROLLERDEVICEREMOVED:
