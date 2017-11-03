@@ -42,7 +42,7 @@ void apu::set_frame(int f) {
 int apu::get_frame() {
     return frame;
 }
-void apu::init() {
+void apu::init(bool headless/*=false*/) {
 
     //dat.buffer = &(buffer[0]); Set this after the number of samples has been determined
     dat.apui = this;
@@ -66,7 +66,7 @@ void apu::init() {
     #ifdef _WIN32
     const char * desired_driver = "directsound";
     #else
-    const char * desired_driver = "pulseaudio";
+    const char * desired_driver = "dummy"; //"pulseaudio";
     #endif
     for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i) {
         const char* driver_name = SDL_GetAudioDriver(i);
@@ -74,9 +74,15 @@ void apu::init() {
         if(strcmp(driver_name, desired_driver) == 0) {
             cout<<"Going to init "<<desired_driver<<" driver."<<endl;
             init_success = SDL_AudioInit(desired_driver);
+            printf("Init call finished, without crashing (yay!)\n");
         }
     }
     
+    if(init_success > 0) {
+        printf("Original init failed, trying to init dummy driver.\n");
+        init_success = SDL_AudioInit("dummy");
+    }
+
     const char * device_name = "";
     if(init_success == 0) {
         cout<<"I think I successfully init'd the driver. Here are the "<<SDL_GetNumAudioDevices(0)<<" audio devices it provides: "<<endl;
@@ -200,7 +206,7 @@ void apu::generate_arrays() {
 }
 
 
-apu::apu() {
+apu::apu(bool headless/* =false */) {
     //std::cout<<"apu constructor"<<std::endl;
     stat.val = 0;
     linear_cntr = 0;

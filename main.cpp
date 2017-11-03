@@ -126,9 +126,14 @@ int main(int argc, char ** argv) {
     }
         
 //        if( SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) < 0 ) {
+    bool headless = false;
     if( SDL_Init(SDL_INIT_EVERYTHING|SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER|SDL_INIT_NOPARACHUTE) < 0 ) {
-        fprintf(stderr,"Couldn't initialize SDL: %s\n", SDL_GetError());
-        exit(1);
+        if( SDL_Init(SDL_INIT_NOPARACHUTE|SDL_INIT_AUDIO) < 0) {
+            fprintf(stderr,"Couldn't initialize SDL: %s\n", SDL_GetError());
+            exit(1);
+        }
+        headless = true;
+        cout<<"Running in headless mode"<<endl;
     }
 
     //cout<<"Trying to open the joystick (if any)"<<endl;

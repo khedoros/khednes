@@ -103,7 +103,7 @@ typedef union {
 
 class apu {
 public:
-    apu();
+    apu(bool headless = false);
     ~apu();
     void gen_audio(uint16_t to_gen = SAMPLE_RATE / 60);
     void reg_write(int frame, int cycle, int addr, int val);
@@ -111,7 +111,7 @@ public:
     static const int play_length(freq_len_reg val);
     int read_status();
     SDL_AudioDeviceID get_id();
-    void init();
+    void init(bool headless=false);
     void generate_arrays();
     void set_frame(int f);
     int get_frame();

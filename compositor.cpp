@@ -9,9 +9,10 @@ compositor::compositor(int res) {
                               320, 240,
                               SDL_WINDOW_RESIZABLE);
     if ( screen == NULL ) {
-        fprintf(stderr, "Couldn't set 320x240x8 video mode: %s\n",
+        fprintf(stderr, "Couldn't set 320x240x8 video mode: %s\nStarting without video output.\n",
                 SDL_GetError());
-        exit(1);
+        //exit(1);
+        return;
     }
 
     SDL_SetWindowMinimumSize(screen, 320, 240);
@@ -104,6 +105,8 @@ const int compositor::palette_table[228] = {0x80,0x80,0x80, 0x00,0x3D,0xA6, 0x00
                                      0x00,0xFF,0x00, 0x00,0x00,0xFF, 0x00,0x00,0x00, 0x00,0x00,0x00};
 
 void compositor::flip() {
+    if(!render) return;
+
     SDL_Rect spr_render;
     spr_render.x = spr_render.y = 0; spr_render.w = 256; spr_render.h = 240;
     SDL_Rect spr_tv;
@@ -190,6 +193,8 @@ void compositor::flip() {
 }
 
 void compositor::fill(int color, SDL_Surface * buff/*=buffer*/) {
+    if(!buffer) return;
+
     if(!buff) buff = buffer;
     SDL_Rect all;
     all.x=0; all.y=0; all.w=1024; all.h=1024;
@@ -201,7 +206,7 @@ void compositor::wait(int ms) {
 }
 
 bool compositor::resize(int x,int y, bool maintain_aspect/*=true*/) {
-
+    if(!screen) return true;
     if(!maintain_aspect) {
         SDL_FreeSurface(buffer);
         buffer = SDL_CreateRGBSurface(0,x,y,8,0,0,0,0);
@@ -247,6 +252,7 @@ bool compositor::resize(int x,int y, bool maintain_aspect/*=true*/) {
 }
 
 void compositor::pset(int x,int y,int color) {
+    if(!overlay) return;
     //cout<<"X: "<<x<<" Y: "<<y<<" Color: "<<color<<endl;
     if(x>=overlay->w||y>=overlay->h||color>=76) {
         //cout<<"X: "<<x<<" Y: "<<y<<" Color: "<<color<<endl;
@@ -278,6 +284,7 @@ void compositor::speedup(bool up) {
 }
 
 void compositor::blit_hps(SDL_Surface * s, int x, int y) {
+    if(!hps) return;
     SDL_Rect pos;
     pos.x = x;
     pos.y = y;
@@ -286,6 +293,7 @@ void compositor::blit_hps(SDL_Surface * s, int x, int y) {
 
 
 void compositor::blit_lps(SDL_Surface * s, int x, int y) {
+    if(!lps) return;
     SDL_Rect pos;
     pos.x = x;
     pos.y = y;
@@ -293,6 +301,7 @@ void compositor::blit_lps(SDL_Surface * s, int x, int y) {
 }
 
 void compositor::blit_nt(SDL_Surface * s, int x, int y) {
+    if(!nt) return;
     SDL_Rect pos;
     pos.x = x;
     pos.y = y;
@@ -300,6 +309,7 @@ void compositor::blit_nt(SDL_Surface * s, int x, int y) {
 }
 
 void compositor::erase_nt(int x,int y) {
+    if(!nt) return;
     SDL_Rect all;
     all.x=x; all.y=y; all.w=8; all.h=8;
     SDL_FillRect(nt,&all,NES_TRANSPARENT);
@@ -310,6 +320,7 @@ SDL_Palette * compositor::get_palette() {
 }
 
 void compositor::add_nt_area(int sx, int sy, int ex, int ey) {
+    if(nt_regions.size() > 1000) return;
     SDL_Rect * temp = new SDL_Rect;
     temp->x = sx;
     temp->y = sy;
