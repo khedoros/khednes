@@ -135,7 +135,7 @@ int main(int argc, char ** argv) {
             exit(1);
         }
         headless = true;
-        cout<<"Running in headless mode"<<endl;
+        cout<<"Running in headless mode due to difficulty initializing some SDL subsystems."<<endl;
     }
 
     //cout<<"Trying to open the joystick (if any)"<<endl;
@@ -158,7 +158,11 @@ int main(int argc, char ** argv) {
     //cout<<"Cart loaded. Going to start ppu"<<endl;
     ppu ppui(cart,res);
     //cout<<"PPU started. Going to start apu."<<endl;
-    apu apui;
+    if(ppui.dummy) {
+        headless = true;
+        cout<<"PPU started in dummy mode, so audio will too."<<endl;
+    }
+    apu apui(headless);
     SDL_PauseAudioDevice(apui.get_id(), true);
     //cout<<"APU started. Going to bring up memory map"<<endl;
     mem memi(cart,ppui,apui);

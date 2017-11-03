@@ -67,23 +67,24 @@ void apu::init(bool headless/*=false*/) {
     #ifdef _WIN32
     const char * desired_driver = "directsound";
     #else
-    const char * desired_driver = "dummy"; //"pulseaudio";
+    const char * desired_driver = "pulseaudio";
     #endif
-    for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i) {
-        const char* driver_name = SDL_GetAudioDriver(i);
-        printf("Audio driver #%d: %s\n", i, driver_name);
-        if(strcmp(driver_name, desired_driver) == 0) {
-            cout<<"Going to init "<<desired_driver<<" driver."<<endl;
-            init_success = SDL_AudioInit(desired_driver);
-            printf("Init call finished, without crashing (yay!)\n");
+
+    if(headless) {
+        printf("In headless mode; going to init dummy audio driver.\n");
+        init_success = SDL_AudioInit("dummy");
+    }
+    else {
+        for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i) {
+            const char* driver_name = SDL_GetAudioDriver(i);
+            printf("Audio driver #%d: %s\n", i, driver_name);
+            if(strcmp(driver_name, desired_driver) == 0) {
+                cout<<"Going to init "<<desired_driver<<" driver."<<endl;
+                init_success = SDL_AudioInit(desired_driver);
+            }
         }
     }
     
-    if(init_success > 0) {
-        printf("Original init failed, trying to init dummy driver.\n");
-        init_success = SDL_AudioInit("dummy");
-    }
-
     const char * device_name = "";
     if(init_success == 0) {
         cout<<"I think I successfully init'd the driver. Here are the "<<SDL_GetNumAudioDevices(0)<<" audio devices it provides: "<<endl;
@@ -258,7 +259,7 @@ apu::apu(bool headless/* =false */) {
     frame = 0;
     write_pos = 1;
 
-    init();
+    init(headless);
     generate_arrays();
     
     //Unpause the audio stream
