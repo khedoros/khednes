@@ -42,7 +42,6 @@ private:
         void set_carry(unsigned char);
         void set_verflow(unsigned char, unsigned char);
         char * stat_string(statreg_t status);
-        int zp_xc, zp_yc, ind_xc, ind_yc, zpc, immediatec, absac, relativec, absa_yc, absa_xc, indc, impc, accumc;
         int zp_x();
         int zp_y();
         int ind_x();

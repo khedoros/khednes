@@ -43,14 +43,17 @@ cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_
     nextopoffset = 0;
     nextoparg = 0;
     frame = 0;
-    zp_xc = zp_yc = ind_xc = ind_yc = zpc = immediatec = absac = relativec = absa_yc = absa_xc = indc = impc = accumc = 0;
 
-    addresses.resize(16);
+    addresses.resize(17); //17th page is for any PC values that occur in RAM instead of ROM
     for(int page=0;page<16;page++) {
         addresses[page].resize(PRG_PAGE_SIZE);
         for(int paddr=0;paddr<PRG_PAGE_SIZE;paddr++) {
             addresses[page][paddr] = 0;
         }
+    }
+    addresses[16].resize(0x8000);
+    for(int paddr=0;paddr<0x8000;paddr++) {
+        addresses[16][paddr] = 0;
     }
 }
 
@@ -97,6 +100,17 @@ void cpu::print_details(const std::string& filename) {
     }
     cout.flush();
     int addr_count = 0;
+    for(int j=0;j<0x8000;++j) {
+        if(addresses[16][j]) {
+            if(print_insts) {
+                printf("RAM:%04X (%04X)\t%s\n", j, addresses[16][j], util::inst_string(memory->read(j),memory->read(j+1),memory->read(j+2)).c_str());
+            }
+            else {
+                printf("RAM:%04X (%04X)\n", j, addresses[16][j]);
+            }
+            addr_count++;
+        }
+    }
     for(int i=0;i<16;++i) {
         for(int j=0;j<PRG_PAGE_SIZE;++j) {
             if(addresses[i][j]) {
@@ -181,88 +195,61 @@ inline void cpu::set_verflow(unsigned char dat1,unsigned char dat2) {
 //Addressing Modes
 inline int cpu::zp_x() {
     pc+=2;
-    ++zp_xc;
     int base_addr=memory->read(pc-1);
-    
     return (base_addr+x)&0xFF;
 }
 
 inline int cpu::zp_y() {
     pc+=2;
-    ++zp_yc;
     int base_addr=memory->read(pc-1);
-    
     return (base_addr+y)&0xFF;
 }
 
 inline int cpu::ind_x() {
     int addr=(memory->read(pc+1)+x)&0xFF;
-    
     pc+=2;
-    ++ind_xc;
     return (memory->read(addr))|((memory->read((addr+1)&0xFF))<<(8));
 }
 
 inline int cpu::ind_y() {
     int addr=memory->read(pc+1);
-    
     pc+=2;
-    ++ind_yc;
     return (((memory->read(addr))|((memory->read((addr+1)&0xFF))<<(8)))+y)&0xFFFF;
 }
 
 inline int cpu::zp() {
     int base_addr=memory->read(pc+1);
-    
     pc+=2;
-    ++zpc;
     return base_addr;
 }
 
 inline int cpu::immediate() {
-    
     pc+=2;
-    ++immediatec;
     return pc-1;
 }
 
 inline int cpu::absa() {
-    
     pc+=3;
-    ++absac;
     return memory->read2(pc-2);
 }
 
 inline int cpu::absa_y() {
-    
     pc+=3;
-    ++absa_yc;
     return (memory->read2(pc-2)+y)&0xFFFF;
 }
 
 inline int cpu::absa_x() {
-    
     pc+=3;
-    ++absa_xc;
     return (memory->read2(pc-2)+x)&0xFFFF;
 }
 
 inline signed char cpu::relative() {
-    
     pc+=2;
-    ++relativec;
     return memory->read(pc-1);
 }
 
 inline int cpu::ind() {
-    #ifdef TRACE_BUILD
-    int lo,hi;
-    hi=memory->read(pc+1);
-    lo=memory->read(pc+2);
-    
-    #endif
     int addr=memory->read2(pc+1);
-    ++indc;
     if((addr&0xFF)==0xFF) {
         return (memory->read(addr))|((memory->read(addr-0xFF))<<(8));
     }
@@ -272,20 +259,15 @@ inline int cpu::ind() {
 }
 
 inline void cpu::imp() {
-    
     pc++;
-    ++impc;
 }
 
 inline void cpu::accum() {
-    
     pc++;
-    ++accumc;
 }
 
 //Operations
 inline void cpu::op_brk() {
-    
     pc++;
     push2(pc);
     status.brk = 1;
@@ -296,7 +278,6 @@ inline void cpu::op_brk() {
 
 inline void cpu::op_ora(int addr) {
     temp=memory->read(addr);
-    
     acc|=temp;
     set_sign(acc);
     set_zero(acc);
@@ -304,7 +285,6 @@ inline void cpu::op_ora(int addr) {
 
 inline void cpu::op_aslm(int addr) {
     temp=memory->read(addr);
-    
     set_carry(temp&0x80);
     temp<<=(1);
     set_zero(temp);
@@ -313,7 +293,6 @@ inline void cpu::op_aslm(int addr) {
 }
 
 inline void cpu::op_asla() {
-    
     set_carry(acc&0x80);
     acc<<=(1);
     set_zero(acc);
@@ -321,13 +300,10 @@ inline void cpu::op_asla() {
 }
 
 inline void cpu::op_php() {
-    
     push(status.reg);
-    //status.brk = 1;
 }
                 
 inline void cpu::op_bpl(signed char offset) {
-    
     if(!status.sign) {
         pc+=offset;
         extra_time++;
@@ -338,15 +314,12 @@ inline void cpu::op_bpl(signed char offset) {
 }
 
 inline void cpu::op_clc() {
-    
     status.carry = 0;
 }
 
 inline void cpu::op_jsr(int addr) {
     //saves address immediately BEFORE the one I want to return to!!!
     //REASON: RTS pops the stack to the PC, THEN increments PC by 1
-    
-    //printf("JSR from %04x to %04x\n", pc, addr);
     pc--;
     push2(pc);
     pc=addr;
@@ -354,7 +327,6 @@ inline void cpu::op_jsr(int addr) {
 
 inline void cpu::op_bit(int addr) {
     temp=memory->read(addr);
-    
     set_zero(acc&temp);
     set_sign(temp);
     if((temp&0x40)>0)
@@ -365,7 +337,6 @@ inline void cpu::op_bit(int addr) {
 
 inline void cpu::op_and(int addr) {
     temp=memory->read(addr);
-    
     acc&=temp;
     set_sign(acc);
     set_zero(acc);
@@ -373,7 +344,6 @@ inline void cpu::op_and(int addr) {
 
 inline void cpu::op_rolm(int addr) {
     temp=memory->read(addr);
-    
     temp2 = status.carry;
     set_carry(temp&0x80);
     temp=((temp<<(1))+temp2);
@@ -383,12 +353,10 @@ inline void cpu::op_rolm(int addr) {
 }
 
 inline void cpu::op_plp() {
-    
     status.reg=pop();
 }
 
 inline void cpu::op_rola() {
-    
     temp = status.carry;
     set_carry(acc&0x80);
     acc=(acc<<(1))+temp;
@@ -397,7 +365,6 @@ inline void cpu::op_rola() {
 }
 
 inline void cpu::op_bmi(signed char offset) {
-    
     if(status.sign) {
         pc+=offset;
         extra_time++;
@@ -408,21 +375,16 @@ inline void cpu::op_bmi(signed char offset) {
 }
 
 inline void cpu::op_sec() {
-    
     status.carry = 1;
 }
 
 inline void cpu::op_rti() {
     status.reg=pop();
-    //printf("RTI from %04x to ", pc);
     pc=pop2();
-    //printf("%04x\n", pc);
-    
 }
 
 inline void cpu::op_eor(int addr) {
     temp=memory->read(addr);
-    
     acc^=temp;
     set_sign(acc);
     set_zero(acc);
@@ -430,7 +392,6 @@ inline void cpu::op_eor(int addr) {
 
 inline void cpu::op_lsrm(int addr) {
     temp=memory->read(addr);
-    
     status.sign = 0;
     set_carry(temp&0x01);
     temp>>=(1);
@@ -439,12 +400,10 @@ inline void cpu::op_lsrm(int addr) {
 }
 
 inline void cpu::op_pha() {
-    
     push(acc);
 }
 
 inline void cpu::op_lsra() {
-    
     status.sign = 0;
     set_carry(acc&0x01);
     acc>>=(1);
@@ -452,12 +411,10 @@ inline void cpu::op_lsra() {
 }
 
 inline void cpu::op_jmp(int addr) {
-    
     pc=addr;
 }
 
 inline void cpu::op_bvc(signed char offset) {
-    
     if(!status.verflow) {
         pc+=offset;
         extra_time++;
@@ -468,23 +425,17 @@ inline void cpu::op_bvc(signed char offset) {
 }
 
 inline void cpu::op_cli() {
-    
     status.inter = 0;
 }
 
 inline void cpu::op_rts() {
-    //printf("RTS from %04x to ", pc);
     pc=pop2();
-    //printf("%04x\n", pc);
-    
     pc++;
 }
 
 inline void cpu::op_adc(int addr) {
     temp=memory->read(addr);
-    
     temp2=temp+acc+status.carry;
-    //if(((acc^temp2)<0x80)               &&          (((acc^(acc+temp2))<0x80)))
     //if the operands have the same sign, AND      The operands have the same sign as the result
     if (!((acc ^ temp) & 0x80) && ((acc ^ temp2) & 0x80))
         status.verflow = 1;
@@ -501,7 +452,6 @@ inline void cpu::op_adc(int addr) {
 
 inline void cpu::op_rorm(int addr) {
     temp=memory->read(addr);
-    
     temp2=status.carry*0x80;
     set_carry(temp&0x01);
     temp=(temp>>(1))+temp2;
@@ -511,14 +461,12 @@ inline void cpu::op_rorm(int addr) {
 }
 
 inline void cpu::op_pla() {
-    
     acc=pop();
     set_sign(acc);
     set_zero(acc);
 }
 
 inline void cpu::op_rora() {
-    
     temp2=status.carry*0x80;
     set_carry(acc&0x01);
     acc=(acc>>(1))+temp2;
@@ -527,7 +475,6 @@ inline void cpu::op_rora() {
 }
 
 inline void cpu::op_bvs(signed char offset) {
-    
     if(status.verflow) {
         pc+=offset;
         extra_time++;
@@ -538,47 +485,34 @@ inline void cpu::op_bvs(signed char offset) {
 }
 
 inline void cpu::op_sei() {
-    
     status.inter = 1;
 }
 
 inline void cpu::op_sty(int addr) {
-    //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
-        
-        memory->write(addr,y);
-    //}
+    memory->write(addr,y);
 }
 
 inline void cpu::op_sta(int addr) {
-    //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
-        
-        memory->write(addr,acc);
-    //}
+    memory->write(addr,acc);
 }
 
 inline void cpu::op_stx(int addr) {
-    //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
-        
-        memory->write(addr,x);
-    //}
+    memory->write(addr,x);
 }
 
 inline void cpu::op_dey() {
-    
     y--;
     set_sign(y);
     set_zero(y);
 }
 
 inline void cpu::op_txa() {
-    
     acc=x;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_bcc(signed char offset) {
-    
     if(!status.carry) {
         extra_time++;
         pc+=offset;
@@ -589,7 +523,6 @@ inline void cpu::op_bcc(signed char offset) {
 }
 
 inline void cpu::op_tya() {
-    
     acc=y;
     set_sign(y);
     set_zero(y);
@@ -597,52 +530,39 @@ inline void cpu::op_tya() {
 
 inline void cpu::op_txs() {
     sp=x;
-    
 }
 
 inline void cpu::op_ldy(int addr) {
-    //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
         y=memory->read(addr);
-        
         set_sign(y);
         set_zero(y);
-    //}
 }
 
 inline void cpu::op_lda(int addr) {
-    //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
         acc=memory->read(addr);
-        
         set_sign(acc);
         set_zero(acc);
-    //}
 }
 
 inline void cpu::op_ldx(int addr) {
-    //if((first)||(addr<0x2000)||((addr>=0x4000)&&addr!=0x4014)) {
         x=memory->read(addr);
-        
         set_sign(x);
         set_zero(x);
-    //}
 }
 
 inline void cpu::op_tay() {
-    
     y=acc;
     set_sign(y);
     set_zero(y);
 }
 
 inline void cpu::op_tax() {
-    
     x=acc;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_bcs(signed char offset) {
-    
     if(status.carry) {
         extra_time++;
         pc+=offset;
@@ -654,19 +574,16 @@ inline void cpu::op_bcs(signed char offset) {
 
 inline void cpu::op_clv() {
     status.verflow = 0;
-    
 }
 
 inline void cpu::op_tsx() {
     x=sp;
-    
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_cpy(int addr) {
     temp=memory->read(addr);
-    
     if(y>=temp)
         status.carry = 1;
     else
@@ -678,7 +595,6 @@ inline void cpu::op_cpy(int addr) {
 
 inline void cpu::op_cmp(int addr) {
     temp=memory->read(addr);
-    
     if(acc>=temp)
         status.carry = 1;
     else
@@ -690,7 +606,6 @@ inline void cpu::op_cmp(int addr) {
 
 inline void cpu::op_dec(int addr) {
     temp=memory->read(addr);
-    
     temp--;
     set_sign(temp);
     set_zero(temp);
@@ -698,21 +613,18 @@ inline void cpu::op_dec(int addr) {
 }
 
 inline void cpu::op_iny() {
-    
     y++;
     set_sign(y);
     set_zero(y);
 }
 
 inline void cpu::op_dex() {
-    
     x--;
     set_sign(x);
     set_zero(x);
 }
 
 inline void cpu::op_bne(signed char offset) {
-    
     if(!status.zero) {
         pc+=offset;
         extra_time++;
@@ -723,13 +635,11 @@ inline void cpu::op_bne(signed char offset) {
 }
 
 inline void cpu::op_cld() {
-    
     status.dec = 0;
 }
 
 inline void cpu::op_cpx(int addr) {
     temp=memory->read(addr);
-    
     if(x>=temp)
         status.carry = 1;
     else
@@ -741,12 +651,10 @@ inline void cpu::op_cpx(int addr) {
 
 inline void cpu::op_sbc(int addr) {
     temp=memory->read(addr);
-    
     temp2=temp;
     temp+=(status.carry?0:1);
     set_zero(acc-temp);
     set_sign(acc-temp);
-    //SET_OVERFLOW(((AC ^ temp) & 0x80) && ((AC ^ src) & 0x80));
     if(((acc^temp)&0x80)>0&&((acc^temp2)&0x80)>0) //magic code from 6502 docs
         status.verflow = 1;
     else
@@ -763,7 +671,6 @@ inline void cpu::op_sbc(int addr) {
 
 inline void cpu::op_inc(int addr) {
     temp=memory->read(addr);
-    
     temp++;
     set_sign(temp);
     set_zero(temp);
@@ -771,7 +678,6 @@ inline void cpu::op_inc(int addr) {
 }
 
 inline void cpu::op_inx() {
-    
     x++;
     set_sign(x);
     set_zero(x);
@@ -782,7 +688,6 @@ inline void cpu::op_nop() {
 }
 
 inline void cpu::op_beq(signed char offset) {
-    
     if(status.zero) {
         extra_time++;
         pc+=offset;
@@ -793,7 +698,6 @@ inline void cpu::op_beq(signed char offset) {
 }
 
 inline void cpu::op_sed() {
-    
     status.dec = 1;
 }
 
@@ -803,7 +707,6 @@ const int cpu::run_next_op() {
     prevopaddr = nextopaddr;
     prevoparg = addr;
     prevopoffset = offset;
-    //cout<<hex<<"Prevop: "<<prevop<<" Prevodaddr: "<<prevopaddr<<dec<<endl;
     memory->set_cycle(ppu_cycle);
     nextop=memory->read(pc);
     nextopaddr = pc;
@@ -819,15 +722,14 @@ const int cpu::run_next_op() {
     statreg_t oldstatus;
     //oldpc=pc;
     oldstatus=status;
-    unsigned int page = memory->get_page(pc);
-    if(page >= 16) cout<<"Page: "<<page<<endl;
-    assert(page < 16);
-    if(pc < 0x8000) {
-        cout<<"Saw PC at "<<hex<<pc<<endl;
-    }
-    //assert(pc >= 0x8000);
     if(pc >= 0x8000) {
+        unsigned int page = memory->get_page(pc);
+        if(page >= 16) cout<<"Page: "<<page<<endl;
+        assert(page < 16);
         addresses[page][pc & (PRG_PAGE_SIZE - 1)] = pc;
+    }
+    if(pc<0x8000) {
+        addresses[16][pc] = pc;
     }
      
     assem_op[0] = 0;

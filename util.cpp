@@ -2,6 +2,7 @@
 #include<stdint.h>
 #include "util.h"
 #include<sstream>
+#include<iomanip>
 #define ORIGIN 6
 
 bool util::init=false;
@@ -115,37 +116,37 @@ std::string util::inst_string(int byte0, int byte1, int byte2) {
         case imp: //implied
             break;
         case imm: //immediate
-            ss<<" #$";
+            ss<<" #$"<<std::setfill('0')<<std::setw(2)<<byte1;
             break;
         case zpa: //zero-page absolute
-            ss<<" $"<<byte1;
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte1;
             break;
         case rel: //relative
-            ss<<" $"<<byte1;
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte1;
             break;
         case abso: //absolute
-            ss<<" $"<<byte2<<byte1;
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte2<<std::setfill('0')<<std::setw(2)<<byte1;
             break;
         case absx://absolute, x-indexed
-            ss<<" $"<<byte2<<byte1<<", X";
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte2<<std::setfill('0')<<std::setw(2)<<byte1<<", X";
             break;
         case absy://absolute, y-indexed
-            ss<<" $"<<byte2<<byte1<<", Y";
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte2<<std::setfill('0')<<std::setw(2)<<byte1<<", Y";
             break;
         case zpx: //zero-page absolute, x-indexed
-            ss<<" $"<<byte1<<", X";
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte1<<", X";
             break;
         case zpy: //zero-page absolute, y-indexed
-            ss<<" $"<<byte1<<", Y";
+            ss<<" $"<<std::setfill('0')<<std::setw(2)<<byte1<<", Y";
             break;
         case ind: //indirect
-            ss<<" ($"<<byte2<<byte1<<")";
+            ss<<" ($"<<std::setfill('0')<<std::setw(2)<<byte2<<std::setfill('0')<<std::setw(2)<<byte1<<")";
             break;
         case zpix://zero-page indirect, x-pre-indexed
-            ss<<" ($"<<byte1<<",X)";
+            ss<<" ($"<<std::setfill('0')<<std::setw(2)<<byte1<<",X)";
             break;
         case zpiy: //zero-page indirect, y-post-indexed
-            ss<<" ($"<<byte1<<"), Y";
+            ss<<" ($"<<std::setfill('0')<<std::setw(2)<<byte1<<"), Y";
             break;
         default:
             break;
