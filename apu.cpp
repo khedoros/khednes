@@ -1,4 +1,5 @@
 #include "apu.h"
+#include "mem.h"
 #include "assert.h"
 #include<iostream>
 using namespace std;
@@ -166,17 +167,21 @@ void apu::generate_arrays() {
     //cout<<"Short count: "<<count<<endl;
     assert(count == 93);
 
-    uint16_t n_f_t[16] = {0x002, 0x004, 0x008, 0x010,
-                          0x020, 0x030, 0x040, 0x050,
-                          0x065, 0x07F, 0x0BE, 0x0FE,
-                          0x17D, 0x1FC, 0x3F9, 0x7F2};
+    uint16_t n_f_t[16] = { 0x002, 0x004, 0x008, 0x010,
+                           0x020, 0x030, 0x040, 0x050,
+                           0x065, 0x07F, 0x0BE, 0x0FE,
+                           0x17D, 0x1FC, 0x3F9, 0x7F2 };
 
     uint8_t g_l_t[16] = { 0x7f, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
                           0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
+    int dmc_f[16] = { 0xD60, 0xBE0, 0xAA0, 0xA00, 0x8F0, 0x7F0, 0x710, 0x6B0,
+                      0x5F0, 0x500, 0x470, 0x400, 0x350, 0x2A8, 0x240, 0x1B0 };
+
     for(uint8_t i=0;i<16;++i) {
         noise_freq_table[i] = n_f_t[i];
         general_len_table[i] = g_l_t[i];
+        dmc_freq_table[i] = dmc_f[i];
     }
 
     uint8_t p_l_t[8] = { 0x05, 0x0A, 0x14, 0x28, 0x50, 0x1E, 0x07, 0x0D };
@@ -218,7 +223,16 @@ apu::apu(bool headless/* =false */) {
     framecounter_reset = 89490;
     enable_irq = false;
     counter_mode = 0;
-    pcm_data = 0;
+
+    dmc_pcm_data = 0;
+    dmc_addr=0;
+    dmc_addr_reset=0xc000;
+    dmc_freq_cnt=0;
+    dmc_freq=0;
+    dmc_length=0;
+    dmc_gen_irq=false;
+    dmc_loop=false;
+
     buffer_read_pos = 0;
     buffer_write_pos = 0;
 
@@ -250,6 +264,10 @@ apu::apu(bool headless/* =false */) {
     //Unpause the audio stream
     if(id > 0)
         SDL_PauseAudioDevice(id, false);
+}
+
+void apu::setmem(mem * m) {
+    memi = m;
 }
 
 void apu::clock_quarter() {
@@ -311,6 +329,63 @@ void apu::clock_half() {
 void apu::clock_full() {
 }
 
+void apu::clock_every() {
+    if(!enabled[DMC]||!dmc_length) {
+        //cout<<"returning"<<endl;
+        return;
+    }
+
+    //CLK_PER_FRAME is the *pixel clock* which runs 3x faster than the CPU clock, which is where the *3 comes from.
+    const int clocks_per_sample = int(double(CLK_PER_FRAME) / double(SAMPLES_PER_FRAME * 3));
+    int accum = 0;       //Generating either 1 or 2 samples, so this is where I'm collecting them
+    int samples = 0;     //Number of samples generated, so that I can divide accum by the right number
+
+    //"clock" represents a CPU clock. The goal is to generate samples faster than incrementing/decrementing the PCM value by 1 at a time
+    for(int clock = 0; clock < clocks_per_sample;) {
+        samples++;
+        int sign = ((dmc_cur_byte & (1<<(dmc_bit))) > 0)?2:-2;
+
+        //Either run up to the wavelength count, or the number of CPU cycles we need to simulate, whichever is less
+        //If we still need to simulate more cycles, that'll happen in the next loop iteration.
+        int increment = (dmc_freq_cnt > (clocks_per_sample - clock)) ? (clocks_per_sample - clock) : dmc_freq_cnt;
+        dmc_pcm_data += (increment*sign);
+
+        //The PCM data doesn't wrap like an X86 register, it "saturates" to stay in the range [0,127]
+        if(dmc_pcm_data < 0) dmc_pcm_data = 0;
+        else if(dmc_pcm_data > 127) dmc_pcm_data = 127;
+
+        accum +=dmc_pcm_data;
+
+        dmc_freq_cnt-=increment;
+        clock += increment;
+
+        //Clock the DMC registers if we're at the end of the wavelength counter
+        if(!dmc_freq_cnt) {
+            dmc_freq_cnt = dmc_freq;
+            dmc_bit++;
+            dmc_bit%=8;
+            if(!dmc_bit) {
+                //TODO: Fix so that it ends when the length runs out, but also wraps around to 0x8000 if it doesn't
+                dmc_addr++;
+                if(dmc_addr==dmc_addr_reset+dmc_length && !dmc_loop) {
+                    dmc_addr = dmc_addr_reset;
+                    enabled[DMC] = false;
+                    return;
+                }
+                else if (dmc_addr==dmc_addr_reset+dmc_length) {
+                    dmc_addr = dmc_addr_reset;
+                    dmc_bit = 0;
+                    dmc_freq_cnt = dmc_freq;
+                }
+                //Grab the next byte both if we're not done going through samples and if we're done, but looping.
+                dmc_cur_byte = memi->read(dmc_addr);
+            }
+        }
+    }
+    dmc_pcm_data = accum/samples;
+    //cout<<"Final data: "<<dmc_pcm_data<<endl;
+}
+
 void apu::gen_audio(uint16_t to_gen) { //To be run once per frame, to generate audio
     //cout<<"Gen_audio"<<endl;
     write_pos = !write_pos;
@@ -347,6 +422,10 @@ void apu::gen_audio(uint16_t to_gen) { //To be run once per frame, to generate a
             clock_quarter();
             clock_half();
         }
+
+        //Clock the things that need updated *every* cycle (but we've got to emulate that, since this loop only covers every sample)
+        clock_every();
+
         while(writes.size() > 0 && ((write_frame == frame && reg_audio_sample <= i) || write_frame < frame)) { //Apply Register writes that go here
             //cout<<"Woot, applying a reg write with "<<writes.size()<<"writes remaining"<<endl;
             reg_dequeue();
@@ -373,7 +452,7 @@ void apu::gen_audio(uint16_t to_gen) { //To be run once per frame, to generate a
         //if(int(accum) + pcm_data > 255) cout<<"Too big: accum="<<int(accum)<<", pcm="<<pcm_data<<endl;
         //if(pcm_data != 0) cout<<"pcm="<<pcm_data<<endl;
         //cout<<"first: "<<dat.first<<"loc: "<<dat.first*SAMPLES_PER_FRAME<<endl;
-        dat.buffer[i+(buffer_write_pos * SAMPLES_PER_FRAME)] = accum + pcm_data;
+        dat.buffer[i+(buffer_write_pos * SAMPLES_PER_FRAME)] = accum + dmc_pcm_data/4;
 
     }
     //cout<<hex<<val.first<<": 0x"<<val.second.first<<" val: 0x"<<val.second.second<<endl;
@@ -412,7 +491,10 @@ void apu::reg_dequeue() {
         int addr = writes.front().second.first - 0x4000;
         int chan = addr / 4;
         int reg = addr % 4;
+        if(addr == 0x10) reg = 0x10;
         if(addr == 0x11) reg = 0x11;
+        if(addr == 0x12) reg = 0x12;
+        if(addr == 0x13) reg = 0x13;
         if(addr == 0x15) reg = 0x15;
         if(addr == 0x17) reg = 0x17;
         int val = writes.front().second.second;
@@ -481,18 +563,42 @@ void apu::reg_dequeue() {
                         decay_vol_lvl[chan] = 15;
                 }
                 break;
+            case 0x10:
+                //cout<<"0x4010: Mode: "<<hex<<((val&0xC0)>>(6))<<" Speed: "<<(val&0x0F)<<endl;
+                dmc_loop = ((val&0x40) > 0);
+                dmc_gen_irq = ((val >= 0x80) && !dmc_loop);
+                dmc_freq = dmc_freq_table[val&0x0f]/8;
+                dmc_freq_cnt = dmc_freq;
+                //cout<<"0x4010: Loop: "<<dmc_loop<<" gen_irq: "<<dmc_gen_irq<<" freq: "<<dmc_freq<<endl;
+                if(dmc_gen_irq) cerr<<"DMC can't generate an IRQ, so this game may not work right."<<endl;
+                break;
             case 0x11:
-                pcm_data = val;
+                //cout<<"0x4011: PCM/counter val: "<<hex<<val<<endl;
+                dmc_pcm_data = (val&0x7f); //The data's just 7 bits
+                break;
+            case 0x12:
+                //cout<<"0x4012: DMC load address: "<<hex<<(((int(val))<<(6))|0xc000)<<endl;
+                dmc_addr = (((int(val))<<(6))|0xc000);
+                dmc_addr_reset = dmc_addr;
+                dmc_bit = 0;
+                dmc_cur_byte = memi->read(dmc_addr);
+                break;
+            case 0x13:
+                //cout<<"0x4013: DMC length val: "<<hex<<((int(val))<<(4))<<endl;
+                dmc_length = ((int(val))<<(4));
+                if(!dmc_length) enabled[DMC] = false;
                 break;
             case 0x15: {
                 //cout<<"Set 0x15 to "<<val<<endl;
                 status_reg a;
                 a.val = val;
-                enabled[0] = a.sq1_on;
-                enabled[1] = a.sq2_on;
-                enabled[2] = a.tri_on;
-                enabled[3] = a.noise_on;
-                enabled[4] = a.dmc_on;
+                enabled[SQ1] = a.sq1_on;
+                enabled[SQ2] = a.sq2_on;
+                enabled[TRI] = a.tri_on;
+                enabled[NOISE] = a.noise_on;
+                enabled[DMC] = a.dmc_on;
+                //if(enabled[DMC]) cout<<"0x4015 DMC enabled"<<endl;
+                //else           cout<<"0x4015 DMC disabled"<<endl;
                 pin1_enabled = a.sq1_on + a.sq2_on;
                 pin2_enabled = a.tri_on + a.noise_on + a.dmc_on;
                 }
@@ -509,6 +615,7 @@ void apu::reg_dequeue() {
                     framecounter_reset = 89490;
                 }
                 enable_irq = !a.irq_disable;
+                //cout<<"0x4017: IRQ enable: "<<enable_irq<<endl;
                 counter_mode = a.counter_mode;
                 framecounter_pos = 0;
                 }
@@ -637,7 +744,7 @@ const int apu::noise_duty() {
     if(enable_decay[NOISE]) retval = noise_states[duty_cycle[NOISE]][wave_pos[NOISE]] * decay_vol_lvl[NOISE];
     else                    retval = noise_states[duty_cycle[NOISE]][wave_pos[NOISE]] * vol[NOISE];
     //cout<<"wave_pos[NOISE]: "<<wave_pos[NOISE]<<endl;
-    return retval;
+    return ((retval*3)/4);
 }
 
 apu::~apu() {

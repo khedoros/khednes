@@ -85,6 +85,8 @@ int getopt(int nargc, char * const nargv[], const char *ostr) {
 //Linux provides getopt, so include the header.
 #include <getopt.h>
 #endif
+    
+int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui);
 
 int main(int argc, char ** argv) {
     opterr = 0;
@@ -141,8 +143,11 @@ int main(int argc, char ** argv) {
     SDL_Joystick * js = NULL;
     int jscount = SDL_NumJoysticks();
     if(jscount > 0) {
-        const char * name = SDL_JoystickNameForIndex(0);
-        cout<<"Found joystick: "<<name<<endl;
+        for(int i=0;i<jscount;++i) {
+            const char * name = SDL_JoystickNameForIndex(i);
+            cout<<"Found joystick: "<<name<<endl;
+        }
+        cout<<"Just opening joystick 0 though"<<endl;
         js = SDL_JoystickOpen(0);
     }
 
@@ -154,11 +159,19 @@ int main(int argc, char ** argv) {
     ppu ppui(cart,res);
     //cout<<"PPU started. Going to start apu."<<endl;
     apu apui;
+    SDL_PauseAudioDevice(apui.get_id(), true);
     //cout<<"APU started. Going to bring up memory map"<<endl;
     mem memi(cart,ppui,apui);
+    apui.setmem(&memi);
     //cout<<"Memory started. Going to start CPU"<<endl;
-    cpu cpui(&memi,&apui,memi.get_rst_addr());
+    cpu cpui(&memi,&apui,memi.get_rst_addr(), cart.isNSF());
     //cout<<"CPU started."<<endl;
+
+    if(cart.isNSF()) {
+        cout<<"Starting NSF player instead of main emulator"<<endl;
+        return run_nsf(cart, apui, memi, cpui);
+    }
+
     bool paused=false;
     //int time_stop;
     //long total_time;
@@ -166,6 +179,7 @@ int main(int argc, char ** argv) {
     //int delay = 0;
     //long delay_count = 0;
     //long delay_total = 0;
+    SDL_PauseAudioDevice(apui.get_id(), false);
     while (1==1) {
         //cout<<"Start of event loop."<<endl;
         //int frame_start = SDL_GetTicks();
@@ -183,6 +197,7 @@ int main(int argc, char ** argv) {
                 int button = int(event.jbutton.button);
                 int state = int(event.jbutton.state);
                 //cout<<"Button: "<<state<<" state: "<<state<<endl;
+                cout<<"Saw button: "<<button<<endl;
                 switch(button) {
                 case 0: sc = SDL_SCANCODE_L; break;
                 case 1: sc = SDL_SCANCODE_K; break;
@@ -202,12 +217,15 @@ int main(int argc, char ** argv) {
                 break;
             case SDL_JOYDEVICEADDED:
             case SDL_CONTROLLERDEVICEADDED:
-                cout<<"Added joystick: "<<SDL_JoystickNameForIndex(event.jdevice.which)<<endl;
+                cout<<"Added joystick "<<event.jdevice.which<<": "<<SDL_JoystickNameForIndex(event.jdevice.which)<<endl;
                 if(js) {
                     SDL_JoystickClose(js);
                     js = NULL;
                 }
-                js = SDL_JoystickOpen(event.jdevice.which);
+                if(!js) {
+                    cout<<"No joystick previously connected, so I'm using that one."<<endl;
+                    js = SDL_JoystickOpen(event.jdevice.which);
+                }
                 break;
             case SDL_JOYDEVICEREMOVED:
             case SDL_CONTROLLERDEVICEREMOVED:
@@ -222,7 +240,7 @@ int main(int argc, char ** argv) {
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_RCTRL))||
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_LCTRL))) {
                     printf("You pressed q or ctrl-c. Exiting.\n");
-                    cpui.print_details();
+                    cpui.print_details(filename);
                     printf("%d frames rendered in %f seconds. (%f FPS)\n",ppui.get_frame(),float(clock())/float(CLOCKS_PER_SEC),float(ppui.get_frame())/(float(clock())/float(CLOCKS_PER_SEC)));
                     //SDL_PauseAudio(true);
                     cout<<"Calling SDL_Quit()"<<endl;
@@ -235,10 +253,14 @@ int main(int argc, char ** argv) {
                 }
                 else if(event.key.keysym.scancode==SDL_SCANCODE_P) {
                     paused=!paused;
-                    if(paused)
+                    if(paused) {
+                        SDL_PauseAudioDevice(apui.get_id(), true);
                         printf("Paused emulation.\n");
-                    else
+                    }
+                    else {
+                        SDL_PauseAudioDevice(apui.get_id(), false);
                         printf("Unpaused emulation.\n");
+                    }
                 }
                 else if(event.key.keysym.scancode >= SDL_SCANCODE_1 &&
                         event.key.keysym.scancode <= SDL_SCANCODE_0) {
@@ -262,6 +284,13 @@ int main(int argc, char ** argv) {
                 memi.sendkeyup(event.key.keysym.scancode);
                 break;
             case SDL_MOUSEMOTION:
+                memi.sendmousepos(event.motion.x, event.motion.y);
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                memi.sendmousedown(event.button.x,event.button.y);
+                break;
+            case SDL_MOUSEBUTTONUP:
+                memi.sendmouseup(event.button.x,event.button.y);
                 break;
             //case SDL_VIDEORESIZE:
             case SDL_WINDOWEVENT:
@@ -282,7 +311,7 @@ int main(int argc, char ** argv) {
             case SDL_QUIT:
                 //SDL_PauseAudio(true);
                 SDL_Quit();
-                cpui.print_details();
+                cpui.print_details(filename);
                 printf("%d frames rendered in %f seconds. (%f FPS)\n",ppui.get_frame(),float(clock())/float(CLOCKS_PER_SEC),float(ppui.get_frame())/(float(clock())/float(CLOCKS_PER_SEC)));
                 return 0;
                 break;
@@ -338,4 +367,175 @@ int main(int argc, char ** argv) {
         }
     }
     return 0;
+}
+
+unsigned int get_choice(rom& cart) {
+    unsigned int choice = 0;
+    while(choice < 1 || choice > cart.get_song_count()) {
+        cout<<"Choose a song number between 1 and "<<dec<<cart.get_song_count()<<": ";
+        cout.flush();
+        cin>>choice;
+    }
+    return choice;
+}
+
+bool init_nsf(rom& cart, mem& memi, cpu& cpui, unsigned int choice = 1) {
+    cout<<"Playing song "<<dec<<choice<<" out of "<<cart.get_song_count()<<endl;
+    cpui.reset(cart.get_rst_addr());
+    cpui.set_acc(choice-1);
+    cpui.set_x(0);
+    for(int i=0;i<0x800;++i)
+        memi.write(i,0);
+    for(int i=0x6000;i<0x8000;++i)
+        memi.write(i,0);
+    for(int i=0x4000;i<0x4014;++i)
+        memi.write(i,0);
+    memi.write(0x4015, 0x0f);
+    memi.write(0x4017, 0x40);
+    cart.reset_map();
+    int ret = 1;
+    while(ret) {
+        ret = cpui.run_next_op();
+        if(ret < 0) return false;
+    }
+    cpui.reset(cart.get_nmi_addr());
+    cout<<"I think I init'ed the program properly."<<endl;
+    return true;
+}
+
+int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
+    bool paused=false;
+    int frame = 0;
+    int choice = cart.get_default_song() + 1; //get_choice(cart);
+    bool success = init_nsf(cart, memi, cpui, choice);
+    if(!success) {
+        cout<<"Failed to init nsf."<<endl;
+        return 1;
+    }
+    SDL_PauseAudioDevice(apui.get_id(), false);
+    int pstart = SDL_GetTicks();
+    while (1==1) {
+exit_poll_loop:
+        SDL_Event event;
+        while(SDL_PollEvent(&event)){  /* Loop until there are no events left on the queue */
+            switch(event.type){  /* Process the appropiate event type */
+            case SDL_KEYDOWN:  /* Handle a KEYDOWN event */         
+                if(event.key.keysym.scancode==SDL_SCANCODE_Q||
+                  (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_RCTRL))||
+                  (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_LCTRL))) {
+                    printf("You pressed q or ctrl-c. Exiting.\n");
+                    cpui.print_details("");
+                    //SDL_PauseAudio(true);
+                    cout<<"Calling SDL_Quit()"<<endl;
+                    SDL_Quit();
+                    cout<<"Called SDL_Quit()"<<endl;
+                    return 0;
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_A) {
+                    choice--;
+                    if(choice<1) choice = cart.get_song_count();
+                    SDL_PauseAudioDevice(apui.get_id(), true);
+                    init_nsf(cart, memi, cpui, choice);
+                    SDL_PauseAudioDevice(apui.get_id(), false);
+                    goto exit_poll_loop;
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_D) {
+                    choice++;
+                    if(choice > (int)cart.get_song_count()) choice = 1;
+                    SDL_PauseAudioDevice(apui.get_id(), true);
+                    init_nsf(cart, memi, cpui, choice);
+                    SDL_PauseAudioDevice(apui.get_id(), false);
+                    goto exit_poll_loop;
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_R) {
+                    SDL_PauseAudioDevice(apui.get_id(), true);
+                    init_nsf(cart,memi,cpui, choice);
+                    SDL_PauseAudioDevice(apui.get_id(), false);
+                    goto exit_poll_loop;
+                }
+                else if(event.key.keysym.scancode==SDL_SCANCODE_P) {
+                    paused=!paused;
+                    if(paused) {
+                        printf("Paused emulation.\n");
+                        SDL_PauseAudioDevice(apui.get_id(), true);
+                    }
+                    else {
+                        printf("Unpaused emulation.\n");
+                        SDL_PauseAudioDevice(apui.get_id(), false);
+                    }
+                }
+                else {
+                    //printf("Keydown\n");
+                    //printf("Time: %d\n",SDL_GetTicks());
+                }
+                break;
+            case SDL_KEYUP: /* Handle a KEYUP event*/
+                //printf("Keyup\n");
+                break;
+            case SDL_QUIT:
+                //SDL_PauseAudio(true);
+                SDL_Quit();
+                cpui.print_details("");
+                return 0;
+                break;
+            default: /* Report an unhandled event */
+                //printf("I don't know what this event is! Flushing it.\n");
+                SDL_FlushEvent(event.type);
+                break;
+            }
+        }
+        if(!paused) {
+            //cout<<"Running the CPU"<<endl;
+            int cpu_ret = 1;
+            int cycle_count = 0;
+            bool reset = true;
+            //cout<<"Frame "<<dec<<frame<<" start"<<endl;
+            while(cpu_ret && cpu_ret > 0) {
+                cpu_ret=cpui.run_next_op();
+                cycle_count += (3*cpu_ret);
+                cpui.set_ppu_cycle(cycle_count);
+                if(cycle_count >= CLK_PER_FRAME) { 
+                    cycle_count -= CLK_PER_FRAME;
+                    reset = false;
+                    break;
+                }
+            }
+            //cout<<"Frame "<<dec<<frame<<" end"<<endl;
+            if(reset) {
+                cpui.reset(cart.get_nmi_addr());
+            }
+
+            //cout<<"Ran the CPU"<<endl;
+            if(cpu_ret < 0) {
+                return 1;
+            }
+            else {
+                //cout<<"Frame "<<ppui.get_frame()<<endl;
+
+                int apu_id = apui.get_id();
+                if(apu_id > 0) {
+                    //cout<<"Locking audio...";
+                    SDL_LockAudioDevice(apu_id);
+                    //cout<<"done."<<endl;
+                    apui.set_frame(frame);
+                    apui.gen_audio();
+                    //apui.dat.buffered += 735; Dude, do this in gen_audio, not here =/
+                    //cout<<"Unlocking audio...";
+                    SDL_UnlockAudioDevice(apu_id);
+                    //cout<<"done."<<endl;
+                }
+            }
+        }
+
+        //Calculates the time that the frame should end at, and delays until that time
+        //cout<<"Timing two"<<endl;
+        int now = SDL_GetTicks();
+        frame++;
+        cpui.increment_frame();
+        int delay = pstart + int(double(frame) * double(1000) / double(60)) - now;
+        //cout<<"Frame: "<<frames<<" now: "<<now<<" delay: "<<delay<<endl;       
+        if(delay > 0) {
+            SDL_Delay(delay);
+        }
+    }
 }

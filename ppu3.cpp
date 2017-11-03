@@ -457,7 +457,8 @@ unsigned char ppu::reg_read(const unsigned int addr, unsigned int cycle) {
         if(control0.v_inc_down) vram_ptr.pointer +=31;
         break;
     default:
-        cout<<"Reading from register 0x"<<hex<<addr<<" isn't handled."<<dec<<endl;
+        //cout<<"Reading from register 0x"<<hex<<addr<<" isn't handled."<<dec<<endl;
+        retval = control1.reg;
         break;
     }
     ++s.reads;
@@ -513,6 +514,23 @@ int ppu::calc() {
                         x_offset=256;
                     }
                     screen.blit_nt(get_Surface(control0.bg_table, val, pal, 0,0), tile_x*8+x_offset, tile_y*8+y_offset);
+                }
+            }
+        }
+
+        for(int table = 0; table < 2; table++) {
+            for(int tile_y = 0; tile_y < 16; tile_y++) {
+                for(int tile_x = 0; tile_x < 16; tile_x++) {
+                    for(int j=0;j<8;++j) {
+                        for(int i=0;i<8;++i) {
+                            int x = 768+tile_x*8+i;
+                            int y = table*128+tile_y*8+j;
+                            int col = get_color(table*256+tile_y*16+tile_x,i,j);
+                            int map[] = {74, 64, 67, 71};
+                            col = map[col];
+                            screen.pset(x, y, col);
+                        }
+                    }
                 }
             }
         }
@@ -790,4 +808,29 @@ void ppu::apply_updates_to(int curcycle) {
     if(changes.set_spr1 == 1) control0.sprite_table = 1;
     int mode_count = changes.set_horiz + changes.set_vert + changes.set_4_scr;
     if(mode_count > 1) cout<<"Multiple mirroring modes set during one vertical tile of time!"<<endl; 
+}
+
+uint32_t ppu::get_buffer_color(int x, int y) {
+    return screen.get_color(x,y);
+}
+
+void ppu::print_name_table() {
+    bool vars[256] = {false};
+    for(int big_y=0;big_y<1;++big_y) {
+        for(int tile_y=0;tile_y<32;++tile_y) {
+            for(int big_x=0;big_x<1;++big_x) {
+                for(int tile_x=0;tile_x<32;++tile_x) {
+                    printf("%02x ", name_table[tile_x+32*tile_y+1024*big_x+2048*big_y]);
+                    if(tile_y < 30) {
+                        vars[name_table[tile_x+32*tile_y+1024*big_x+2048*big_y]] = true;
+                    }
+                }
+            }
+            printf("\n");
+        }
+        printf("\n");
+    }
+    printf("Contains these values: ");
+    for(int i=0;i<256;++i) if(vars[i]) printf("%02x ", i);
+    printf("\n");
 }

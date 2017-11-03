@@ -1,6 +1,4 @@
-#ifndef CPU_H
-#define CPU_H
-
+#pragma once
 #include "mem.h"
 #include "apu.h"
 #include <string>
@@ -24,13 +22,18 @@ public:
             };
         };
 
-        cpu(mem * data, apu * ap, const unsigned int start_loc);
+        cpu(mem * data, apu * ap, const unsigned int start_loc, const bool is_nsf);
+        ~cpu();
         const int run_next_op();
         const int run_ops();
         void trigger_nmi();
         void trigger_irq();
         void reset(int);
-        void print_details();
+        void increment_frame();
+        void set_ppu_cycle(int);
+        void set_acc(int);
+        void set_x(int);
+        void print_details(const std::string&);
 private:
         void debug_dummy(int,const char *,...);
         void debug_dummy(const char *,...);
@@ -177,5 +180,6 @@ private:
         const static int FLAG_TRUE=0x20;
         const static int FLAG_VERFLOW=0x40;
         const static int FLAG_SIGN=0x80;
+
+        bool nsf_mode;
 };
-#endif

@@ -1,7 +1,6 @@
-#ifndef APU_H
-#define APU_H
-
+#pragma once
 #include<SDL2/SDL.h>
+#include "mem.h"
 #include "nes_constants.h"
 #include<list>
 #include "util.h"
@@ -11,6 +10,7 @@
 //#define SAMPLE_RATE 11025
 
 class apu;
+class mem;
 
 typedef struct {
     unsigned char * buffer;
@@ -105,6 +105,7 @@ class apu {
 public:
     apu(bool headless = false);
     ~apu();
+    void setmem(mem * memptr);
     void gen_audio(uint16_t to_gen = SAMPLE_RATE / 60);
     void reg_write(int frame, int cycle, int addr, int val);
     static const int noise_freq(freq_len_reg val);
@@ -124,10 +125,12 @@ public:
     const static uint16_t SAMPLES_PER_FRAME = SAMPLE_RATE / 60;
 private:
     void reg_dequeue();
+    mem * memi;
     int get_sample(int voice);
     void clock_quarter();
     void clock_half();
     void clock_full();
+    void clock_every(); //clock every sample, and simulate per-cycle clocking inside
     void clock_duty(int voice);
     const int sq1_duty();
     const int sq2_duty();
@@ -221,9 +224,20 @@ Note that these conditions pertain regardless of any sweep refresh rate values, 
     bool enable_irq; //Is IRQ enabled
     int counter_mode;
 
-    int pcm_data; //Current value for PCM data coming from the DMC
 
-    int frame;
+    //4010, 4011, 4012, 4013, 4015
+    int dmc_freq_table[16]; //Actually wavelengths, in terms of clock cycles to pass between clocking the DMC hardware for the next bit of data
+    int dmc_pcm_data;       //Current value for PCM data coming from the DMC's DAC
+    int dmc_addr;           //Address for sfx data
+    int dmc_addr_reset;     //Address to reset to, for looping
+    int dmc_freq_cnt;       //Wavelength counter
+    int dmc_freq;           //Reset value for the wavelength counter
+    bool dmc_gen_irq;       //Generate IRQ when the sound ends? (not implemented, but the emulator prints a warning about it)
+    bool dmc_loop;          //Loop the effect when it ends? (not tested, but should work ;-) )
+    int dmc_length;         //Byte length of the sfx
+    int dmc_bit;            //Current bit selected for an increment value
+    int dmc_cur_byte;       //Place to store the current byte when I fetch it from the CPU memory map
+
+    int frame;              //Keeps track of the current video frame so that I process register writes at the right time
 };
 
-#endif

@@ -170,6 +170,7 @@ void compositor::flip() {
         }
         
         SDL_BlitSurface(hps,NULL,buffer,&spr_tv); //Draw the high-priority sprites
+        //wait(20);
     }
 
     SDL_BlitSurface(overlay,NULL,buffer,&all); //Put the pset'ed overlay on top
@@ -199,6 +200,28 @@ void compositor::fill(int color, SDL_Surface * buff/*=buffer*/) {
     SDL_Rect all;
     all.x=0; all.y=0; all.w=1024; all.h=1024;
     SDL_FillRect(buff,&all,color);
+}
+
+uint32_t compositor::get_color(int x,int y) {
+    int wx,wy;
+    SDL_GetWindowSize(screen,&wx,&wy);
+    //cout<<"Requested ("<<x<<", "<<y<<"), current res: ("<<cur_x_res<<", "<<cur_y_res<<")"<<" window size: ("<<wx<<", "<<wy<<")"<<endl;
+    if(x>=wx||y>=wy||x<0||y<0) {
+        //cout<<"Requested ("<<x<<", "<<y<<"), current res: ("<<cur_x_res<<", "<<cur_y_res<<")"<<endl;
+        return 0;
+    }
+    else {
+        //cout<<"("<<x<<", "<<y;
+        x = int(float(x) * (float(cur_x_res) / float(wx)));
+        y = int(float(y) * (float(cur_y_res) / float(wy)));
+        //cout<<") translated to ("<<x<<", "<<y<<")"<<endl;
+    }
+
+    size_t index = (y * buffer->pitch) + x;
+    int color_index =  ((uint8_t *)(buffer->pixels))[index];
+    //                      blue                            green                                       red
+    uint32_t color = palette_table[color_index *3+2] + ((palette_table[color_index * 3 + 1])<<(8)) + ((palette_table[color_index * 3])<<(16));
+    return color;
 }
 
 void compositor::wait(int ms) {
@@ -257,6 +280,7 @@ void compositor::pset(int x,int y,int color) {
     if(x>=overlay->w||y>=overlay->h||color>=76) {
         //cout<<"X: "<<x<<" Y: "<<y<<" Color: "<<color<<endl;
         //cout<<"cur_x_res: "<<cur_x_res<<" cur_y_res: "<<cur_y_res<<endl;
+        //std::cout<<"Overlay: ("<<overlay->w<<", "<<overlay->h<<")"<<endl;
         std::cout<<"Pset: out of range ("<<x<<", "<<y<<"), "<<color<<endl;
         return;
     }

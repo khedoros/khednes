@@ -1,5 +1,4 @@
-#ifndef ROM_H
-#define ROM_H
+#pragma once
 #include<fstream>
 #include<iostream>
 #include<list>
@@ -11,25 +10,34 @@ class mapper_001;
 class mapper_002;
 class mapper_003;
 class mapper_011;
+class mapper_nsf;
 
 class rom {
-friend mapper;
-friend mapper_001;
-friend mapper_002;
-friend mapper_003;
-friend mapper_011;
+friend class mapper;
+friend class mapper_001;
+friend class mapper_002;
+friend class mapper_003;
+friend class mapper_011;
+friend class mapper_nsf;
 
 public:
         rom(std::string filename, int mapper);
         ~rom();
         bool isValid();
+        bool isNSF();
+        const unsigned int get_song_count();
+        const unsigned int get_default_song();
         void print_info();
+        void print_nsf_info();
+        const unsigned int get_header(const unsigned int);
         const unsigned int get_rst_addr();
         const unsigned int get_nmi_addr();
         const unsigned int get_irq_addr();
+        void reset_map();
         const unsigned int get_pbyte(const unsigned int addr);
         const unsigned int get_pword(unsigned int);
         const unsigned int get_cbyte(const unsigned int addr);
+        const unsigned int get_page(const unsigned int addr);
         const unsigned int mmc1_readp(const unsigned int addr);
         bool put_cbyte(const unsigned int val,const unsigned int addr);
         void put_pbyte(const unsigned int cycle, const unsigned int val,const unsigned int addr);
@@ -61,6 +69,8 @@ public:
 private:
 
         bool load(std::string& filename);
+        bool load_nsf(std::string& filename);
+
         int mapper_guess();
         mapper *map;
 
@@ -89,5 +99,15 @@ private:
         unsigned int prg_hi_offset;
         unsigned int chr_lo_offset;
         unsigned int chr_hi_offset;
+
+        //NSF-specific values
+        int load_addr;
+        unsigned int song_count;
+        unsigned int song_index;
+        unsigned int ntsc_ticks;
+        unsigned int pal_ticks;
+        bool pal;
+        bool ntsc;
+        bool nsf;
+        bool uses_banks;
 };
-#endif
