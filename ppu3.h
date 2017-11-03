@@ -234,5 +234,5 @@ public:
         void speedup(bool up);
         uint32_t get_buffer_color(int x, int y);
         void print_name_table();
-
+        bool dummy;
 };

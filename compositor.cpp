@@ -12,8 +12,11 @@ compositor::compositor(int res) {
         fprintf(stderr, "Couldn't set 320x240x8 video mode: %s\nStarting without video output.\n",
                 SDL_GetError());
         //exit(1);
+        dummy = true;
         return;
     }
+
+    dummy = false;
 
     SDL_SetWindowMinimumSize(screen, 320, 240);
     cur_x_res=256;
@@ -221,7 +224,11 @@ uint32_t compositor::get_color(int x,int y) {
         //cout<<") translated to ("<<x<<", "<<y<<")"<<endl;
     }
 
-    size_t index = (y * buffer->pitch) + x;
+    size_t index = 0;
+    if(buffer) {
+        index = (y * buffer->pitch) + x;
+    }
+
     int color_index = 1;
     if(screen) {
         color_index =  ((uint8_t *)(buffer->pixels))[index];

@@ -7,6 +7,12 @@
 #define ORIGIN 4
 
 ppu::ppu(rom& romi, int res) : cart(romi), screen(1), scroll_shifts(0), frame(0) {
+    if(screen.dummy) {
+        dummy = true;
+    }
+    else {
+        dummy = false;
+    }
     //cout<<"Start ppu constructor"<<endl;
     //cout<<"\tRes: "<<res<<endl;
     //cout<<"End ppu constructor"<<endl<<endl;
