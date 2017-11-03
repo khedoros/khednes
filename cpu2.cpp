@@ -49,7 +49,7 @@ cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_
     for(int page=0;page<16;page++) {
         addresses[page].resize(PRG_PAGE_SIZE);
         for(int paddr=0;paddr<PRG_PAGE_SIZE;paddr++) {
-            addresses[page][paddr] = false;
+            addresses[page][paddr] = 0;
         }
     }
 }
@@ -95,14 +95,14 @@ void cpu::print_details(const std::string& filename) {
                 if(print_insts) {
                     int base = i * PRG_PAGE_SIZE + j;
                     if(base < data.size()) {
-                        printf("cool %02X:%04X\t%s\n",i,j,(util::inst_string(data[base],data[base+1],data[base+2])).c_str());
+                        printf("%02X:%04X (%04X)\t%s\n", i, j, addresses[i][j], (util::inst_string(data[base],data[base+1],data[base+2])).c_str());
                     }
                     else {
                         printf("%02X:%04X is outside the file.\n",i,j);
                     }
                 }
                 else {
-                    printf("boring %02X:%04X\n",i,j);
+                    printf("%02X:%04X (%04X)\n",i,j, addresses[i][j]);
                 }
                 addr_count++;
             }
@@ -819,7 +819,7 @@ const int cpu::run_next_op() {
     }
     //assert(pc >= 0x8000);
     if(pc >= 0x8000) {
-        addresses[page][pc & (PRG_PAGE_SIZE - 1)] = true;
+        addresses[page][pc & (PRG_PAGE_SIZE - 1)] = pc;
     }
      
     assem_op[0] = 0;
