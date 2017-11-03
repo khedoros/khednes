@@ -203,8 +203,12 @@ void compositor::fill(int color, SDL_Surface * buff/*=buffer*/) {
 }
 
 uint32_t compositor::get_color(int x,int y) {
-    int wx,wy;
-    SDL_GetWindowSize(screen,&wx,&wy);
+
+    int wx=320;
+    int wy=240;
+    if(screen) {
+        SDL_GetWindowSize(screen,&wx,&wy);
+    }
     //cout<<"Requested ("<<x<<", "<<y<<"), current res: ("<<cur_x_res<<", "<<cur_y_res<<")"<<" window size: ("<<wx<<", "<<wy<<")"<<endl;
     if(x>=wx||y>=wy||x<0||y<0) {
         //cout<<"Requested ("<<x<<", "<<y<<"), current res: ("<<cur_x_res<<", "<<cur_y_res<<")"<<endl;
@@ -218,7 +222,10 @@ uint32_t compositor::get_color(int x,int y) {
     }
 
     size_t index = (y * buffer->pitch) + x;
-    int color_index =  ((uint8_t *)(buffer->pixels))[index];
+    int color_index = 1;
+    if(screen) {
+        color_index =  ((uint8_t *)(buffer->pixels))[index];
+    }
     //                      blue                            green                                       red
     uint32_t color = palette_table[color_index *3+2] + ((palette_table[color_index * 3 + 1])<<(8)) + ((palette_table[color_index * 3])<<(16));
     return color;

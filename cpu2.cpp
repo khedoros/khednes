@@ -82,8 +82,16 @@ void cpu::print_details(const std::string& filename) {
         filesize = rom.tellg() - streampos(16);
         cout<<"Going to read "<<dec<<filesize<<" bytes from it."<<endl;
         rom.seekg(16,ios::beg);
-        data.resize(filesize);
-        rom.read(reinterpret_cast<char *>(&data[0]), filesize);
+        if(filesize < 40 * 1024) {
+            data.resize(filesize+PRG_PAGE_SIZE);
+            rom.read(reinterpret_cast<char *>(&data[0]), filesize);
+            rom.seekg(16,ios::beg);
+            rom.read(reinterpret_cast<char *>(&data[PRG_PAGE_SIZE]), filesize);
+        }
+        else {
+            data.resize(filesize);
+            rom.read(reinterpret_cast<char *>(&data[0]), filesize);
+        }
         rom.close();
         cout<<"Read the data. Closed the file."<<endl;
     }
