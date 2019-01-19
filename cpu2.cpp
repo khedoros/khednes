@@ -243,9 +243,10 @@ inline int cpu::absa_x() {
     return (memory->read2(pc-2)+x)&0xFFFF;
 }
 
-inline signed char cpu::relative() {
+inline int cpu::relative() {
     pc+=2;
-    return memory->read(pc-1);
+    signed char offset = memory->read(pc-1);
+    return pc + offset;
 }
 
 inline int cpu::ind() {
@@ -258,12 +259,14 @@ inline int cpu::ind() {
     }
 }
 
-inline void cpu::imp() {
+inline int cpu::imp() {
     pc++;
+    return 0;
 }
 
-inline void cpu::accum() {
+inline int cpu::accum() {
     pc++;
+    return 0;
 }
 
 //Operations
@@ -303,9 +306,9 @@ inline void cpu::op_php() {
     push(status.reg);
 }
                 
-inline void cpu::op_bpl(signed char offset) {
+inline void cpu::op_bpl(int offset) {
     if(!status.sign) {
-        pc+=offset;
+        pc=offset;
         extra_time++;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
@@ -364,9 +367,9 @@ inline void cpu::op_rola() {
     set_sign(acc);
 }
 
-inline void cpu::op_bmi(signed char offset) {
+inline void cpu::op_bmi(int offset) {
     if(status.sign) {
-        pc+=offset;
+        pc=offset;
         extra_time++;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
@@ -414,9 +417,9 @@ inline void cpu::op_jmp(int addr) {
     pc=addr;
 }
 
-inline void cpu::op_bvc(signed char offset) {
+inline void cpu::op_bvc(int offset) {
     if(!status.verflow) {
-        pc+=offset;
+        pc=offset;
         extra_time++;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
@@ -474,9 +477,9 @@ inline void cpu::op_rora() {
     set_zero(acc);
 }
 
-inline void cpu::op_bvs(signed char offset) {
+inline void cpu::op_bvs(int offset) {
     if(status.verflow) {
-        pc+=offset;
+        pc=offset;
         extra_time++;
         if((pc>>(8))!=((pc-offset)>>(8))) {
                 extra_time++;
@@ -512,10 +515,10 @@ inline void cpu::op_txa() {
     set_zero(x);
 }
 
-inline void cpu::op_bcc(signed char offset) {
+inline void cpu::op_bcc(int offset) {
     if(!status.carry) {
         extra_time++;
-        pc+=offset;
+        pc=offset;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
         }
@@ -562,10 +565,10 @@ inline void cpu::op_tax() {
     set_zero(x);
 }
 
-inline void cpu::op_bcs(signed char offset) {
+inline void cpu::op_bcs(int offset) {
     if(status.carry) {
         extra_time++;
-        pc+=offset;
+        pc=offset;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
         }
@@ -624,9 +627,9 @@ inline void cpu::op_dex() {
     set_zero(x);
 }
 
-inline void cpu::op_bne(signed char offset) {
+inline void cpu::op_bne(int offset) {
     if(!status.zero) {
-        pc+=offset;
+        pc=offset;
         extra_time++;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
@@ -687,10 +690,10 @@ inline void cpu::op_nop() {
     
 }
 
-inline void cpu::op_beq(signed char offset) {
+inline void cpu::op_beq(int offset) {
     if(status.zero) {
+        pc=offset;
         extra_time++;
-        pc+=offset;
         if((pc>>(8))!=((pc-offset)>>(8))) {
             extra_time++;
         }
@@ -703,6 +706,7 @@ inline void cpu::op_sed() {
 
 int inst_count=0;
 const int cpu::run_next_op() {
+    //std::cout<<"Addr: "<<std::hex<<pc<<std::endl;
     prevop = nextop;
     prevopaddr = nextopaddr;
     prevoparg = addr;
@@ -1514,6 +1518,7 @@ void cpu::trigger_nmi() {
 }
 
 void cpu::trigger_irq() {
+    //std::cout<<"IRQ TRIGGERED"<<std::endl;
     push2(pc);
     status.inter = 0;
     push(status.reg);

@@ -177,21 +177,11 @@ int main(int argc, char ** argv) {
     }
 
     bool paused=false;
-    //int time_stop;
-    //long total_time;
     int pstart = SDL_GetTicks();
-    //int delay = 0;
-    //long delay_count = 0;
-    //long delay_total = 0;
     SDL_PauseAudioDevice(apui.get_id(), false);
     while (1==1) {
-        //cout<<"Start of event loop."<<endl;
-        //int frame_start = SDL_GetTicks();
         SDL_Event event;
-        //int curx,cury;
         int newx,newy;
-        //bool changed;
-        //cout<<"Polling and handling events"<<endl;
         while(SDL_PollEvent(&event)){  /* Loop until there are no events left on the queue */
             switch(event.type){  /* Process the appropiate event type */
             case SDL_JOYBUTTONDOWN:
@@ -326,31 +316,19 @@ int main(int argc, char ** argv) {
             }
         }
         if(!paused) {
-            //cout<<"Running the CPU"<<endl;
             int cpu_ret=cpui.run_ops();
-            //cout<<"Ran the CPU"<<endl;
             if(cpu_ret < 0) {
                 return 1;
             }
             else {
-                //cout<<"Frame "<<ppui.get_frame()<<endl;
-
                 int apu_id = apui.get_id();
                 if(apu_id > 0) {
-                    //cout<<"Locking audio...";
                     SDL_LockAudioDevice(apu_id);
-                    //cout<<"done."<<endl;
                     apui.set_frame(ppui.get_frame());
                     apui.gen_audio();
-                    //apui.dat.buffered += 735; Dude, do this in gen_audio, not here =/
-                    //cout<<"Unlocking audio...";
                     SDL_UnlockAudioDevice(apu_id);
-                    //cout<<"done."<<endl;
                 }
-                //cout<<SDL_GetTicks()<<": Frame: "<<ppui.get_frame()<<" Write pos: "<<apui.write_pos<<endl;
-                //cout<<"Running the PPU"<<endl;
                 int ppu_ret=ppui.calc();
-                //cout<<"Ran the PPU"<<endl;
                 if(ppu_ret>0) {
                     if(ppu_ret==1) {
                         //cout<<"Triggering NMI in CPU"<<endl;
@@ -361,26 +339,14 @@ int main(int argc, char ** argv) {
         }
 
         //Calculates the time that the frame should end at, and delays until that time
-        //cout<<"Timing two"<<endl;
         int frames = ppui.get_frame();
         int now = SDL_GetTicks();
         int delay = pstart + int(double(frames) * double(1000) / double(60)) - now;
-        //cout<<"Frame: "<<frames<<" now: "<<now<<" delay: "<<delay<<endl;       
         if(delay > 0) {
             SDL_Delay(delay);
         }
     }
     return 0;
-}
-
-unsigned int get_choice(rom& cart) {
-    unsigned int choice = 0;
-    while(choice < 1 || choice > cart.get_song_count()) {
-        cout<<"Choose a song number between 1 and "<<dec<<cart.get_song_count()<<": ";
-        cout.flush();
-        cin>>choice;
-    }
-    return choice;
 }
 
 bool init_nsf(rom& cart, mem& memi, cpu& cpui, unsigned int choice = 1) {
@@ -422,14 +388,13 @@ int run_nsf(rom& cart, apu& apui, mem& memi, cpu& cpui) {
 exit_poll_loop:
         SDL_Event event;
         while(SDL_PollEvent(&event)){  /* Loop until there are no events left on the queue */
-            switch(event.type){  /* Process the appropiate event type */
-            case SDL_KEYDOWN:  /* Handle a KEYDOWN event */         
+            switch(event.type){
+            case SDL_KEYDOWN:
                 if(event.key.keysym.scancode==SDL_SCANCODE_Q||
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_RCTRL))||
                   (event.key.keysym.scancode==SDL_SCANCODE_C&&(event.key.keysym.mod==KMOD_LCTRL))) {
                     printf("You pressed q or ctrl-c. Exiting.\n");
                     cpui.print_details("");
-                    //SDL_PauseAudio(true);
                     cout<<"Calling SDL_Quit()"<<endl;
                     SDL_Quit();
                     cout<<"Called SDL_Quit()"<<endl;
@@ -473,27 +438,23 @@ exit_poll_loop:
                     //printf("Time: %d\n",SDL_GetTicks());
                 }
                 break;
-            case SDL_KEYUP: /* Handle a KEYUP event*/
-                //printf("Keyup\n");
+            case SDL_KEYUP:
                 break;
             case SDL_QUIT:
-                //SDL_PauseAudio(true);
                 SDL_Quit();
                 cpui.print_details("");
                 return 0;
                 break;
-            default: /* Report an unhandled event */
+            default:
                 //printf("I don't know what this event is! Flushing it.\n");
                 SDL_FlushEvent(event.type);
                 break;
             }
         }
         if(!paused) {
-            //cout<<"Running the CPU"<<endl;
             int cpu_ret = 1;
             int cycle_count = 0;
             bool reset = true;
-            //cout<<"Frame "<<dec<<frame<<" start"<<endl;
             while(cpu_ret && cpu_ret > 0) {
                 cpu_ret=cpui.run_next_op();
                 cycle_count += (3*cpu_ret);
@@ -504,40 +465,29 @@ exit_poll_loop:
                     break;
                 }
             }
-            //cout<<"Frame "<<dec<<frame<<" end"<<endl;
             if(reset) {
                 cpui.reset(cart.get_nmi_addr());
             }
 
-            //cout<<"Ran the CPU"<<endl;
             if(cpu_ret < 0) {
                 return 1;
             }
             else {
-                //cout<<"Frame "<<ppui.get_frame()<<endl;
-
                 int apu_id = apui.get_id();
                 if(apu_id > 0) {
-                    //cout<<"Locking audio...";
                     SDL_LockAudioDevice(apu_id);
-                    //cout<<"done."<<endl;
                     apui.set_frame(frame);
                     apui.gen_audio();
-                    //apui.dat.buffered += 735; Dude, do this in gen_audio, not here =/
-                    //cout<<"Unlocking audio...";
                     SDL_UnlockAudioDevice(apu_id);
-                    //cout<<"done."<<endl;
                 }
             }
         }
 
         //Calculates the time that the frame should end at, and delays until that time
-        //cout<<"Timing two"<<endl;
         int now = SDL_GetTicks();
         frame++;
         cpui.increment_frame();
         int delay = pstart + int(double(frame) * double(1000) / double(60)) - now;
-        //cout<<"Frame: "<<frames<<" now: "<<now<<" delay: "<<delay<<endl;       
         if(delay > 0) {
             SDL_Delay(delay);
         }

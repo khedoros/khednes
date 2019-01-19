@@ -49,14 +49,31 @@ private:
         int zp();
         int immediate();
         int absa();
-        signed char relative();
+        int relative();
         int absa_y();
         int absa_x();
         int ind();
-        void imp();
-        void accum();
+        int imp();
+        int accum();
 
-        void op_bpl(signed char);
+        enum addr_mode {
+            ZERO_PAGE,
+            ZERO_PAGE_X,
+            ZERO_PAGE_Y,
+            INDIRECT,
+            INDIRECT_X,
+            INDIRECT_Y,
+            IMMEDIATE,
+            ABSOLUTE,
+            ABSOLUTE_X,
+            ABSOLUTE_Y,
+            RELATIVE,
+            IMPLIED,
+            ACCUMULATOR,
+            INVALID_MODE
+        };
+
+        void op_bpl(int);
         void op_brk();        
         void op_ora(int);
         void op_aslm(int);
@@ -69,7 +86,7 @@ private:
         void op_rolm(int);
         void op_plp();
         void op_rola();
-        void op_bmi(signed char);
+        void op_bmi(int);
         void op_sec();
         void op_rti();
         void op_eor(int);
@@ -77,21 +94,21 @@ private:
         void op_pha();
         void op_lsra();
         void op_jmp(int);
-        void op_bvc(signed char);
+        void op_bvc(int);
         void op_cli();
         void op_rts();
         void op_adc(int);
         void op_rorm(int);
         void op_pla();
         void op_rora();
-        void op_bvs(signed char);
+        void op_bvs(int);
         void op_sei();
         void op_sty(int);
         void op_sta(int);
         void op_stx(int);
         void op_dey();
         void op_txa();
-        void op_bcc(signed char);
+        void op_bcc(int);
         void op_tya();
         void op_txs();
         void op_ldy(int);
@@ -99,7 +116,7 @@ private:
         void op_ldx(int);
         void op_tay();
         void op_tax();
-        void op_bcs(signed char);
+        void op_bcs(int);
         void op_clv();
         void op_tsx();
         void op_cpy(int);
@@ -107,15 +124,79 @@ private:
         void op_dec(int);
         void op_iny();
         void op_dex();
-        void op_bne(signed char);
+        void op_bne(int);
         void op_cld();
         void op_cpx(int);
         void op_sbc(int);
         void op_inc(int);
         void op_inx();
         void op_nop();
-        void op_beq(signed char);
+        void op_beq(int);
         void op_sed();
+
+        enum operation {
+            BPL,
+            BRK,        
+            ORA,
+            ASLM,
+            ASLA,
+            PHP,
+            CLC,
+            JSR,
+            BIT,
+            AND,
+            ROLM,
+            PLP,
+            ROLA,
+            BMI,
+            SEC,
+            RTI,
+            EOR,
+            LSRM,
+            PHA,
+            LSRA,
+            JMP,
+            BVC,
+            CLI,
+            RTS,
+            ADC,
+            RORM,
+            PLA,
+            RORA,
+            BVS,
+            SEI,
+            STY,
+            STA,
+            STX,
+            DEY,
+            TXA,
+            BCC,
+            TYA,
+            TXS,
+            LDY,
+            LDA,
+            LDX,
+            TAY,
+            TAX,
+            BCS,
+            CLV,
+            TSX,
+            CPY,
+            CMP,
+            DEC,
+            INY,
+            DEX,
+            BNE,
+            CLD,
+            CPX,
+            SBC,
+            INC,
+            INX,
+            NOP,
+            BEQ,
+            SED,
+            INVALID_OP
+        };
 
         void push(unsigned char val);
         void push2(unsigned int val);
@@ -123,7 +204,7 @@ private:
         unsigned int pop2();
         void core_dump();
 
-        unsigned int pc;
+        int pc;
         unsigned char acc;
         statreg_t status;
         unsigned char x;
@@ -139,17 +220,17 @@ private:
 
         unsigned int nextop;        
         unsigned int nextopaddr;
-        signed char nextopoffset;
+        int nextopoffset;
         unsigned int nextoparg;
         unsigned int prevpc;
         unsigned int prevop;
         unsigned int prevopaddr;
         unsigned int prevoparg;
-        signed char prevopoffset;
+        int prevopoffset;
         unsigned int prevopsrun;
         unsigned int addr;
         unsigned int addr2;
-        signed char offset;
+        int offset;
         //unsigned char temp;
         //unsigned char temp2;
         unsigned int temp;
