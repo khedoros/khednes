@@ -4,23 +4,13 @@ mapper::mapper(rom* r) {
     cart = r;
 }
 const unsigned int mapper::get_pbyte(const unsigned int addr) {
-    if(cart->prom_pages > 1) return cart->prom[addr-0x8000];
-    else if(addr < 0xC000)
-        return cart->prom[addr-0x8000];
-    else
-        return cart->prom[addr-0xC000];
+    if(cart->prom_pages > 1) return cart->prom[addr & 0x7FFF];
+    else return cart->prom[addr & 0x3FFF];
 }
 
 const unsigned int mapper::get_pword(const unsigned int addr) {
-    if(cart->prom_pages > 1) return cart->prom_w[addr-0x8000];
-    else if(addr < 0xC000) {
-        //std::cout<<"Reading: 0x"<<std::hex<<addr<<" (0x"<<(addr-0x8000+prg_lo_offset)<<")"<<std::endl;
-        return cart->prom_w[addr-0x8000];
-    }
-    else {
-        //std::cout<<"Reading: 0x"<<std::hex<<addr<<" (0x"<<(addr-0xc000+prg_hi_offset)<<")"<<std::endl;
-        return cart->prom_w[addr-0xC000];
-    }
+    if(cart->prom_pages > 1) return cart->prom_w[addr & 0x7FFF];
+    else return cart->prom_w[addr & 0x3FFF];
 }
 
 const unsigned int mapper::get_cbyte(const unsigned int addr) {

@@ -179,23 +179,20 @@ void mem::sendmousedown(int x,int y) {
 const unsigned int mem::read(unsigned int address) {
         address&=0xFFFF;
         read_from[address] = true;
-        if(address<=0x1FFF) { 
+        if(address<=0x1FFF) {  //RAM, 0x0000 -> 0x07FF, and 3 mirrors
                 return ram[address&0x7ff];
         }
-        if(address>=0x8000) {
-                return cart.get_pbyte(address);
-        }
-        if(address>=0x2000&&address<0x4000) {
+        else if(address>=0x2000&&address<=0x3FFF) { //PPU registers. 8 or them, mirrored many times.
                 //util::debug(ORIGIN, "Reading ppu register address %04x\n",address);
                 return pu.reg_read((address&7)+0x2000, cycle);
         }
-        if((address>=0x4000&&address<0x4014)||address==0x4015) {
+        else if((address>=0x4000&&address<=0x4013)||address==0x4015) { //Audio hardware
                 //util::debug(ORIGIN, "TODO: unimplemented audio stuff.\n");
                 //if(address == 0x4015) cout<<"Read sound status"<<endl;
-        return snd.read_status();
+                return snd.read_status();
                 //return 0;
         }
-        if(address==0x4016) {//||address==0x4017) {
+        else if(address==0x4016) { //Joypad 1
                 //util::debug(ORIGIN, "TODO: unimplemented joypad handling.\n");
                 if(joy1_strobe) {
                         //util::debug(ORIGIN,"A (strobe is on)\n");
@@ -212,37 +209,25 @@ const unsigned int mem::read(unsigned int address) {
                 }
                 return 0;
         }
-        else if(address==0x4017) {
-                uint32_t color = pu.get_buffer_color(mouse_x, mouse_y);
-                color |= pu.get_buffer_color(mouse_x+5, mouse_y+5);
-                color |= pu.get_buffer_color(mouse_x+5, mouse_y-5);
-                color |= pu.get_buffer_color(mouse_x-5, mouse_y+5);
-                color |= pu.get_buffer_color(mouse_x-5, mouse_y-5);
-                color |= pu.get_buffer_color(mouse_x, mouse_y+5);
-                color |= pu.get_buffer_color(mouse_x, mouse_y-5);
-                color |= pu.get_buffer_color(mouse_x-5, mouse_y);
-                color |= pu.get_buffer_color(mouse_x-5, mouse_y);
-                uint8_t r = color>>(16);
-                uint8_t g = (color&0xFF00)>>(8);
-                uint8_t b = (color&0xFF);
-                if(r > 0x80 || g > 0x80 || b > 0x80) joy2_light = 0;
-                else                                 joy2_light = 8;
-                //cout<<"joy2_light: "<<((joy2_light)?"yes":"no")<<endl;
+        else if(address==0x4017) { //Joypad 2
                 if(joy1_strobe) {
                     return joy2_buttons[0];
                 }
                 else if(joy2_bit<8) {
                     int retval=(joy2_buttons[joy2_bit])?1:0;
                     joy2_bit++;
-                    return retval|joy2_trigger|joy2_light;
+                    return retval;
                 }
                 else {
-                    return 1|joy2_trigger|joy2_light;
+                    return 1;
                 }
                 return 0;
         }
         else if(address>=0x6000&&address<=0x7fff) {
             return sram[address&0x1fff];
+        }
+        if(address>=0x8000) {
+                return cart.get_pbyte(address);
         }
         util::debug(ORIGIN, "mem read of %04x unhandled. I don't know what the address does.\n",address);
         return 0;
@@ -287,32 +272,30 @@ const std::string& mem::get_filename() {
 void mem::write(unsigned int address, unsigned char val) {
         address&=0xFFFF;
         written_to[address]=true;
-        if(address>=0x2000&&address<0x4000) {
+        if(address<=0x1FFF) {
+                ram[address&0x7FF]=val;
+        }
+        else if(address>=0x2000&&address<=0x3FFF) {
                 //cout<<"Writing to PPU "<<endl;
                 pu.reg_write((address&7)+0x2000,val,cycle);
         }
-        else if(address<=0x1FFF) {
-                ram[address&0x7FF]=val;
+        else if((address>=0x4000&&address<=0x4013)||address==0x4015||address==0x4017) {
+                snd.reg_write(frame, cycle, address,val);
         }
         else if(address==0x4014) {
                 for(int ii=0;ii<256;ii++) {
                         pu.dma(this->read(((int(val))<<(8))+ii),cycle);
                 }
         }
-        else if((address>=0x4000&&address<0x4014)||address==0x4015||address==0x4017) {
-                //util::debug(ORIGIN,"TODO: unimplemented audio stuff.\n");
-                snd.reg_write(frame, cycle, address,val);
-        }
         else if(address==0x4016) {
-                //util::debug(ORIGIN,"TODO: unimplemented joypad handling.\n");
                 if((val&0x01)==1) {
-                                        joy1_strobe=true;
-                                        joy1_bit=0;
-                                        joy2_bit=0;
-                                }
-                                else {
-                                        joy1_strobe=false;
-                                }
+                        joy1_strobe=true;
+                        joy1_bit=0;
+                        joy2_bit=0;
+                }
+                else {
+                        joy1_strobe=false;
+                }
         }
         else if(address>=0x6000&&address<=0x7fff) {
             //std::cout<<"Writing SRAM address "<<std::hex<<(address&0x1fff)<<std::endl;
