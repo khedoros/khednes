@@ -1,7 +1,7 @@
 #include "rom.h"
 #include "mem.h"
-#include "ppu3.h"
-#include "cpu2.h"
+#include "ppu.h"
+#include "cpu.h"
 #include "apu.h"
 #include "util.h"
 using namespace std;

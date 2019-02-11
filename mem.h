@@ -1,6 +1,6 @@
 #pragma once
 #include "rom.h"
-#include "ppu3.h"
+#include "ppu.h"
 #include "apu.h"
 #include "util.h"
 #include<string>

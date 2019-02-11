@@ -21,7 +21,7 @@ main:
 
 
 .PHONY: khednes
-khednes: main.o rom.o mem.o cpu2.o ppu3.o util.o apu.o compositor.o mapper.o mapper_001_mmc1.o mapper_002_unrom.o mapper_003_cnrom.o mapper_011_color_dreams.o mapper_nsf.o
+khednes: main.o rom.o mem.o cpu.o ppu.o util.o apu.o compositor.o mapper.o mapper_001_mmc1.o mapper_002_unrom.o mapper_003_cnrom.o mapper_011_color_dreams.o mapper_nsf.o
 	g++ $(MAIN_OPTS) $^ -o khednes $(SDL2_LIBS)
 
 #.PHONY: debug
@@ -29,7 +29,7 @@ khednes: main.o rom.o mem.o cpu2.o ppu3.o util.o apu.o compositor.o mapper.o map
 #	g++ $(DBG_OPTS) $^ -lSDL -o khednes-dbg
 
 .PHONY: debug
-debug: main.odb rom.odb mem.odb cpu2.odb ppu3.odb util.odb apu.odb compositor.odb mapper.odb mapper_001_mmc1.odb mapper_002_unrom.odb mapper_003_cnrom.odb mapper_011_color_dreams.odb mapper_nsf.odb
+debug: main.odb rom.odb mem.odb cpu.odb ppu.odb util.odb apu.odb compositor.odb mapper.odb mapper_001_mmc1.odb mapper_002_unrom.odb mapper_003_cnrom.odb mapper_011_color_dreams.odb mapper_nsf.odb
 	g++ $(DBG_OPTS) $^ -o khednes-dbg $(SDL2_LIBS)
 
 main.o: main.cpp

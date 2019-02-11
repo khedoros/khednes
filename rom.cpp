@@ -32,11 +32,6 @@ rom::rom(std::string filename, int m) : file(filename), mapper_num(m) {
     //printf("CHR_PAGE_SIZE: %d sizeof crom: %d crom pages: %d",CHR_PAGE_SIZE,crom_pages,CHR_PAGE_SIZE*crom_pages);
 }
 
-int rom::mapper_guess() {
-    //bool possible[256] = {true};
-    return 1;
-}
-
 bool rom::load(std::string& filename) {
     std::ifstream filein;
     filein.open(filename.c_str(),std::ios::binary|std::ios::in);
@@ -94,18 +89,13 @@ bool rom::load(std::string& filename) {
     if(mapper_num == 0) {
         //std::cout<<std::hex<<(header[6]>>(4))<<" "<<(header[7]&0xF0)<<std::endl;
         mapper_num=((header[6]>>(4)));//|(header[7]&0xF0));//often incorrect
-        if(header[7] != 'D') mapper_num |= (header[7]/16)<<(4);
-    }
-    if(mapper_num == 0 && (prom_pages > 2 || crom_pages != 1)) {
-        std::cout<<"It's not possible that this is mapper 0. Taking a guess! =/"<<std::endl;
-        mapper_num = mapper_guess();
+        if(header[7] != 'D') mapper_num |= (header[7]&0xF0);
     }
 
     sram=((0x02&header[6])>0)?true:false;
     trainer=((0x04&header[6])>0)?true:false;
 
     prom.resize(prom_pages*PRG_PAGE_SIZE);
-    //prom_w = new unsigned int[prom_pages*PRG_PAGE_SIZE];
     prom_w.resize(prom_pages * PRG_PAGE_SIZE);
     filein.read(reinterpret_cast<char*>(&prom[0]),PRG_PAGE_SIZE*prom_pages);
     for(int i=0;i<prom_pages*PRG_PAGE_SIZE-1;++i)

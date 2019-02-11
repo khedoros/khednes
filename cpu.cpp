@@ -1,4 +1,4 @@
-#include "cpu2.h"
+#include "cpu.h"
 #include "util.h"
 #include <iostream>
 #include <fstream>

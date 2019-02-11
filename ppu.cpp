@@ -1,4 +1,4 @@
-#include "ppu3.h"
+#include "ppu.h"
 #include "nes_constants.h"
 #include <assert.h>
 #include <list>
