@@ -48,6 +48,7 @@ public:
     static bool is_active(int i);
     static std::string inst_string(int byte0, int byte1=-1, int byte2=-1);
 
+    static const int addr_mode_byte_length[];
     static const std::string inst_names[];
     static const addr_mode   inst_types[];
 private:

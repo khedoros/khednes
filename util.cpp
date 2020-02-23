@@ -194,3 +194,21 @@ const addr_mode util::inst_types[] {
 /*E0*/   imm, zpix,  inv,  inv,  zpa,  zpa,  zpa,  inv,  imp,  imm,  imp,  inv, abso, abso, abso,  inv,
 /*F0*/   rel, zpiy,  inv,  inv,  inv,  zpx,  zpx,  inv,  imp, absy,  inv,  inv,  inv, absx, absx,  inv
 };
+
+const int util::addr_mode_byte_length[] = {
+        0,
+        1,
+        1,
+        2,
+        3,
+        2,
+        2,
+        3,
+        3,
+        2,
+        2,
+        3,
+        2,
+        2
+    };
+

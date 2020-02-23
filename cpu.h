@@ -42,6 +42,7 @@ private:
         void set_carry(unsigned char);
         void set_verflow(unsigned char, unsigned char);
         char * stat_string(statreg_t status);
+        void print_inst_trace();
         int zp_x();
         int zp_y();
         int ind_x();
@@ -210,6 +211,7 @@ private:
         unsigned char x;
         unsigned char y;
         unsigned char sp;
+        int max;
 
         mem * memory;
         apu * audio;

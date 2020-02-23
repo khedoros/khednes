@@ -18,15 +18,15 @@ void cpu::debug_dummy(const char *,...) {
 
 Vect<Vect<int>> addresses;
 
-cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf) {
+cpu::cpu(mem * data, apu * ap, const unsigned int start_loc, bool is_nsf) : nsf_mode(is_nsf), max(20) {
     for(int i=0;i<256;++i) {
         inst_counts[i]=0;
     }
     memory=data;
     audio=ap;
     pc=start_loc;
-    status.reg=0;//FLAG_TRUE|FLAG_BRK;
-    sp=0;
+    status.reg=FLAG_TRUE|FLAG_BRK;
+    sp=0x00;
     acc=0;
     x=0;
     y=0;
@@ -707,6 +707,9 @@ inline void cpu::op_sed() {
 int inst_count=0;
 const int cpu::run_next_op() {
     //std::cout<<"Addr: "<<std::hex<<pc<<std::endl;
+#ifdef DEBUG
+    print_inst_trace();
+#endif
     prevop = nextop;
     prevopaddr = nextopaddr;
     prevoparg = addr;
@@ -1573,4 +1576,24 @@ inline unsigned int cpu::pop2() {
 inline unsigned int cpu::pop() {
     sp++;
     return memory->read(0x100+sp);
+}
+
+void cpu::print_inst_trace() {
+    std::printf("%04X  ", pc);
+    unsigned char bytes[3] = {memory->read(pc), 0, 0};
+    std::printf("%02X ", bytes[0]);
+    for(int i=1;i<3; i++) {
+        if(i<util::addr_mode_byte_length[util::inst_types[bytes[0]]]) {
+            bytes[i] = memory->read(pc+i);
+            std::printf("%02X ", bytes[i]);
+        }
+        else {
+            std::printf("   ");
+        }
+    }
+    std::string temp = util::inst_string(bytes[0], bytes[1], bytes[2]);
+    if(temp.size() > max) max = temp.size();
+    std::printf(" %s            ", temp.c_str());
+    for(int i=0;i<max - temp.size();i++) { std::printf(" "); }
+    std::printf("A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", acc, x, y, status.reg, sp);
 }
