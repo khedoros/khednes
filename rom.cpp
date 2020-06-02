@@ -26,7 +26,7 @@ rom::rom(std::string filename, int m) : file(filename), mapper_num(m) {
         }
         if(!valid) {
             printf("Problem loading %s. Make sure it exists and you can read it.\n",filename.c_str());
-            exit(1);
+            //exit(1);
         }
     }
     //printf("CHR_PAGE_SIZE: %d sizeof crom: %d crom pages: %d",CHR_PAGE_SIZE,crom_pages,CHR_PAGE_SIZE*crom_pages);

@@ -270,7 +270,7 @@ inline int cpu::accum() {
 }
 
 //Operations
-inline void cpu::op_brk() {
+inline void cpu::op_brk(int) {
     pc++;
     push2(pc);
     status.brk = 1;
@@ -295,14 +295,14 @@ inline void cpu::op_aslm(int addr) {
     memory->write(addr,temp);
 }
 
-inline void cpu::op_asla() {
+inline void cpu::op_asla(int) {
     set_carry(acc&0x80);
     acc<<=(1);
     set_zero(acc);
     set_sign(acc);
 }
 
-inline void cpu::op_php() {
+inline void cpu::op_php(int) {
     push(status.reg);
 }
                 
@@ -316,7 +316,7 @@ inline void cpu::op_bpl(int offset) {
     }
 }
 
-inline void cpu::op_clc() {
+inline void cpu::op_clc(int) {
     status.carry = 0;
 }
 
@@ -355,11 +355,11 @@ inline void cpu::op_rolm(int addr) {
     set_sign(temp);        
 }
 
-inline void cpu::op_plp() {
+inline void cpu::op_plp(int) {
     status.reg=pop();
 }
 
-inline void cpu::op_rola() {
+inline void cpu::op_rola(int) {
     temp = status.carry;
     set_carry(acc&0x80);
     acc=(acc<<(1))+temp;
@@ -377,11 +377,11 @@ inline void cpu::op_bmi(int offset) {
     }
 }
 
-inline void cpu::op_sec() {
+inline void cpu::op_sec(int) {
     status.carry = 1;
 }
 
-inline void cpu::op_rti() {
+inline void cpu::op_rti(int) {
     status.reg=pop();
     pc=pop2();
 }
@@ -402,11 +402,11 @@ inline void cpu::op_lsrm(int addr) {
     memory->write(addr,temp);
 }
 
-inline void cpu::op_pha() {
+inline void cpu::op_pha(int) {
     push(acc);
 }
 
-inline void cpu::op_lsra() {
+inline void cpu::op_lsra(int) {
     status.sign = 0;
     set_carry(acc&0x01);
     acc>>=(1);
@@ -427,11 +427,11 @@ inline void cpu::op_bvc(int offset) {
     }
 }
 
-inline void cpu::op_cli() {
+inline void cpu::op_cli(int) {
     status.inter = 0;
 }
 
-inline void cpu::op_rts() {
+inline void cpu::op_rts(int) {
     pc=pop2();
     pc++;
 }
@@ -463,13 +463,13 @@ inline void cpu::op_rorm(int addr) {
     memory->write(addr,temp);
 }
 
-inline void cpu::op_pla() {
+inline void cpu::op_pla(int) {
     acc=pop();
     set_sign(acc);
     set_zero(acc);
 }
 
-inline void cpu::op_rora() {
+inline void cpu::op_rora(int) {
     temp2=status.carry*0x80;
     set_carry(acc&0x01);
     acc=(acc>>(1))+temp2;
@@ -487,7 +487,7 @@ inline void cpu::op_bvs(int offset) {
     }
 }
 
-inline void cpu::op_sei() {
+inline void cpu::op_sei(int) {
     status.inter = 1;
 }
 
@@ -503,13 +503,13 @@ inline void cpu::op_stx(int addr) {
     memory->write(addr,x);
 }
 
-inline void cpu::op_dey() {
+inline void cpu::op_dey(int) {
     y--;
     set_sign(y);
     set_zero(y);
 }
 
-inline void cpu::op_txa() {
+inline void cpu::op_txa(int) {
     acc=x;
     set_sign(x);
     set_zero(x);
@@ -525,13 +525,13 @@ inline void cpu::op_bcc(int offset) {
     }
 }
 
-inline void cpu::op_tya() {
+inline void cpu::op_tya(int) {
     acc=y;
     set_sign(y);
     set_zero(y);
 }
 
-inline void cpu::op_txs() {
+inline void cpu::op_txs(int) {
     sp=x;
 }
 
@@ -553,13 +553,13 @@ inline void cpu::op_ldx(int addr) {
         set_zero(x);
 }
 
-inline void cpu::op_tay() {
+inline void cpu::op_tay(int) {
     y=acc;
     set_sign(y);
     set_zero(y);
 }
 
-inline void cpu::op_tax() {
+inline void cpu::op_tax(int) {
     x=acc;
     set_sign(x);
     set_zero(x);
@@ -575,11 +575,11 @@ inline void cpu::op_bcs(int offset) {
     }
 }
 
-inline void cpu::op_clv() {
+inline void cpu::op_clv(int) {
     status.verflow = 0;
 }
 
-inline void cpu::op_tsx() {
+inline void cpu::op_tsx(int) {
     x=sp;
     set_sign(x);
     set_zero(x);
@@ -615,13 +615,13 @@ inline void cpu::op_dec(int addr) {
     memory->write(addr,temp);
 }
 
-inline void cpu::op_iny() {
+inline void cpu::op_iny(int) {
     y++;
     set_sign(y);
     set_zero(y);
 }
 
-inline void cpu::op_dex() {
+inline void cpu::op_dex(int) {
     x--;
     set_sign(x);
     set_zero(x);
@@ -637,7 +637,7 @@ inline void cpu::op_bne(int offset) {
     }
 }
 
-inline void cpu::op_cld() {
+inline void cpu::op_cld(int) {
     status.dec = 0;
 }
 
@@ -680,13 +680,13 @@ inline void cpu::op_inc(int addr) {
     memory->write(addr,temp);
 }
 
-inline void cpu::op_inx() {
+inline void cpu::op_inx(int) {
     x++;
     set_sign(x);
     set_zero(x);
 }
 
-inline void cpu::op_nop() {
+inline void cpu::op_nop(int) {
     
 }
 
@@ -700,7 +700,7 @@ inline void cpu::op_beq(int offset) {
     }
 }
 
-inline void cpu::op_sed() {
+inline void cpu::op_sed(int) {
     status.dec = 1;
 }
 
@@ -748,7 +748,7 @@ const int cpu::run_next_op() {
             return -1;
         }
         imp();
-        op_brk();
+        op_brk(0);
         break;
     case 0x01://ORA IND X
         addr=ind_x();
@@ -764,7 +764,7 @@ const int cpu::run_next_op() {
         break;
     case 0x08://PHP
         imp();
-        op_php();
+        op_php(0);
         break;
     case 0x09://ORA IMM
         addr=immediate();
@@ -772,7 +772,7 @@ const int cpu::run_next_op() {
         break;
     case 0x0a://ASL A
         accum();
-        op_asla();
+        op_asla(0);
         break;
     case 0x0d://ORA ABS
         addr=absa();
@@ -803,7 +803,7 @@ const int cpu::run_next_op() {
         break;
     case 0x18://CLC
         imp();
-        op_clc();
+        op_clc(0);
         break;
     case 0x19://ORA ABS Y
         addr=absa_y();
@@ -848,7 +848,7 @@ const int cpu::run_next_op() {
         break;
     case 0x28://PLP
         imp();
-        op_plp();
+        op_plp(0);
         break;
     case 0x29://AND IMM
         addr=immediate();
@@ -856,7 +856,7 @@ const int cpu::run_next_op() {
         break;
     case 0x2a://ROL A
         accum();
-        op_rola();
+        op_rola(0);
         break;
     case 0x2c://BIT ABS
         addr=absa();
@@ -891,7 +891,7 @@ const int cpu::run_next_op() {
         break;
     case 0x38://SEC
         imp();
-        op_sec();
+        op_sec(0);
         break;
     case 0x39://AND ABS Y
         addr=absa_y();
@@ -917,7 +917,7 @@ const int cpu::run_next_op() {
         }
         //if(nsf_mode) return 0;
         imp();
-        op_rti();
+        op_rti(0);
         break;
     case 0x41://EOR IND X
         addr=ind_x();
@@ -933,7 +933,7 @@ const int cpu::run_next_op() {
         break;
     case 0x48://PHA
         imp();
-        op_pha();
+        op_pha(0);
         break;
     case 0x49://EOR IMM
         addr=immediate();
@@ -941,7 +941,7 @@ const int cpu::run_next_op() {
         break;
     case 0x4a://LSR A
         accum();
-        op_lsra();
+        op_lsra(0);
         break;
     case 0x4c://JMP ABS
         addr=absa();
@@ -976,7 +976,7 @@ const int cpu::run_next_op() {
         break;
     case 0x58://CLI
         imp();
-        op_cli();
+        op_cli(0);
         break;
     case 0x59://EOR ABS Y
         addr=absa_y();
@@ -1009,7 +1009,7 @@ const int cpu::run_next_op() {
                 return 0;
             }
         }
-        op_rts();
+        op_rts(0);
         break;
     case 0x61://ADC IND X
         addr=ind_x();
@@ -1025,7 +1025,7 @@ const int cpu::run_next_op() {
         break;
     case 0x68://PLA
         imp();
-        op_pla();
+        op_pla(0);
         break;
     case 0x69://ADC IMM
         addr=immediate();
@@ -1033,7 +1033,7 @@ const int cpu::run_next_op() {
         break;
     case 0x6a://ROR A
         accum();
-        op_rora();
+        op_rora(0);
         break;
     case 0x6c://JMP IND
         addr=ind();
@@ -1068,7 +1068,7 @@ const int cpu::run_next_op() {
         break;
     case 0x78://SEI
         imp();
-        op_sei();
+        op_sei(0);
         break;
     case 0x79://ADC ABS Y
         addr=absa_y();
@@ -1106,11 +1106,11 @@ const int cpu::run_next_op() {
         break;
     case 0x88://DEY
         imp();
-        op_dey();
+        op_dey(0);
         break;
     case 0x8a://TXA
         imp();
-        op_txa();
+        op_txa(0);
         break;
     case 0x8c://STY ABS
         addr=absa();
@@ -1146,7 +1146,7 @@ const int cpu::run_next_op() {
         break;
     case 0x98://TYA
         imp();
-        op_tya();
+        op_tya(0);
         break;
     case 0x99://STA ABS Y
         addr=absa_y();
@@ -1154,7 +1154,7 @@ const int cpu::run_next_op() {
         break;
     case 0x9a://TXS
         imp();
-        op_txs();
+        op_txs(0);
         break;
     case 0x9d://STA ABS X
         addr=absa_x();
@@ -1186,7 +1186,7 @@ const int cpu::run_next_op() {
         break;
     case 0xa8://TAY
         imp();
-        op_tay();
+        op_tay(0);
         break;
     case 0xa9://LDA IMM
         addr=immediate();
@@ -1194,7 +1194,7 @@ const int cpu::run_next_op() {
         break;
     case 0xaa://TAX
         imp();
-        op_tax();
+        op_tax(0);
         break;
     case 0xac://LDY ABS
         addr=absa();
@@ -1233,7 +1233,7 @@ const int cpu::run_next_op() {
         break;
     case 0xb8://CLV
         imp();
-        op_clv();
+        op_clv(0);
         break;
     case 0xb9://LDA ABS Y
         addr=absa_y();
@@ -1244,7 +1244,7 @@ const int cpu::run_next_op() {
         break;
     case 0xba://TSX
         imp();
-        op_tsx();
+        op_tsx(0);
         break;
     case 0xbc://LDY ABS X
         addr=absa_x();
@@ -1289,7 +1289,7 @@ const int cpu::run_next_op() {
         break;
     case 0xc8://INY
         imp();
-        op_iny();
+        op_iny(0);
         break;
     case 0xc9://CMP IMM
         addr=immediate();
@@ -1297,7 +1297,7 @@ const int cpu::run_next_op() {
         break;
     case 0xca://DEX
         imp();
-        op_dex();
+        op_dex(0);
         break;
     case 0xcc://CPY ABS
         addr=absa();
@@ -1332,7 +1332,7 @@ const int cpu::run_next_op() {
         break;
     case 0xd8://CLD
         imp();
-        op_cld();
+        op_cld(0);
         break;
     case 0xd9://CMP ABS Y
         addr=absa_y();
@@ -1374,7 +1374,7 @@ const int cpu::run_next_op() {
         break;
     case 0xe8://INX
         imp();
-        op_inx();
+        op_inx(0);
         break;
     case 0xe9://SBC IMM
         addr=immediate();
@@ -1382,7 +1382,7 @@ const int cpu::run_next_op() {
         break;
     case 0xea://NOP
         imp();
-        op_nop();
+        op_nop(0);
         break;
     case 0xec://CPX ABS
         addr=absa();
@@ -1417,7 +1417,7 @@ const int cpu::run_next_op() {
         break;
     case 0xf8://SED
         imp();
-        op_sed();
+        op_sed(0);
         break;
     case 0xf9://SBC ABS Y
         addr=absa_y();
@@ -1597,3 +1597,18 @@ void cpu::print_inst_trace() {
     for(int i=0;i<max - temp.size();i++) { std::printf(" "); }
     std::printf("A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", acc, x, y, status.reg, sp);
 }
+
+#ifdef CPUEXP
+int main() {
+//	cpu(mem * data, apu * ap, const unsigned int start_loc, const bool is_nsf);
+apu a; rom r("potato",0); ppu p(r,1);	mem m(r,p,a); 
+	cpu bob(&m,&a,0,false);
+	for(int i=0;i<13;i++) {
+		printf("addr mode %d: %x\n", i, bob.addrModes[i]);
+	}
+	for(int i=0;i<60;i++) {
+		printf("operation %d: %x\n", i, bob.operations[i]);
+	}
+	return 0;
+}
+#endif

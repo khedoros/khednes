@@ -47,3 +47,6 @@ main.odb: main.cpp
 .PHONY: clean
 clean:
 	@-rm *.o *.odb khednes khednes-dbg
+
+dumb:
+	g++ -DCPUEXP cpu.cpp mem.cpp util.cpp ppu.cpp rom.cpp compositor.cpp mapper*.cpp apu.cpp -lSDL2

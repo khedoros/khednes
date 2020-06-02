@@ -4,6 +4,8 @@
 #include <string>
 
 class cpu {
+        typedef int (cpu::*AddrModePtr)();
+        typedef void (cpu::*OpPtr)(int);
 
 public:
         union statreg_t {
@@ -34,6 +36,86 @@ public:
         void set_acc(int);
         void set_x(int);
         void print_details(const std::string&);
+	AddrModePtr addrModes[13] = {
+		&cpu::zp_x,
+		&cpu::zp_y,
+		&cpu::ind_x,
+		&cpu::ind_y,
+		&cpu::zp,
+		&cpu::immediate,
+		&cpu::absa,
+		&cpu::absa_y,
+		&cpu::absa_x,
+		&cpu::relative,
+		&cpu::ind,
+		&cpu::imp,
+		&cpu::accum
+	};
+
+	OpPtr operations[60] = {
+        &cpu::op_bpl,
+        &cpu::op_brk,        
+        &cpu::op_ora,
+        &cpu::op_aslm,
+        &cpu::op_asla,
+        &cpu::op_php,
+        &cpu::op_clc,
+        &cpu::op_jsr,
+        &cpu::op_bit,
+        &cpu::op_and,
+        &cpu::op_rolm,
+        &cpu::op_plp,
+        &cpu::op_rola,
+        &cpu::op_bmi,
+        &cpu::op_sec,
+        &cpu::op_rti,
+        &cpu::op_eor,
+        &cpu::op_lsrm,
+        &cpu::op_pha,
+        &cpu::op_lsra,
+        &cpu::op_jmp,
+        &cpu::op_bvc,
+        &cpu::op_cli,
+        &cpu::op_rts,
+        &cpu::op_adc,
+        &cpu::op_rorm,
+        &cpu::op_pla,
+        &cpu::op_rora,
+        &cpu::op_bvs,
+        &cpu::op_sei,
+        &cpu::op_sty,
+        &cpu::op_sta,
+        &cpu::op_stx,
+        &cpu::op_dey,
+        &cpu::op_txa,
+        &cpu::op_bcc,
+        &cpu::op_tya,
+        &cpu::op_txs,
+        &cpu::op_ldy,
+        &cpu::op_lda,
+        &cpu::op_ldx,
+        &cpu::op_tay,
+        &cpu::op_tax,
+        &cpu::op_bcs,
+        &cpu::op_clv,
+        &cpu::op_tsx,
+        &cpu::op_cpy,
+        &cpu::op_cmp,
+        &cpu::op_dec,
+        &cpu::op_iny,
+        &cpu::op_dex,
+        &cpu::op_bne,
+        &cpu::op_cld,
+        &cpu::op_cpx,
+        &cpu::op_sbc,
+        &cpu::op_inc,
+        &cpu::op_inx,
+        &cpu::op_nop,
+        &cpu::op_beq,
+        &cpu::op_sed,
+	};
+
+
 private:
         void debug_dummy(int,const char *,...);
         void debug_dummy(const char *,...);
@@ -75,65 +157,65 @@ private:
         };
 
         void op_bpl(int);
-        void op_brk();        
+        void op_brk(int);        
         void op_ora(int);
         void op_aslm(int);
-        void op_asla();
-        void op_php();
-        void op_clc();
+        void op_asla(int);
+        void op_php(int);
+        void op_clc(int);
         void op_jsr(int);
         void op_bit(int);
         void op_and(int);
         void op_rolm(int);
-        void op_plp();
-        void op_rola();
+        void op_plp(int);
+        void op_rola(int);
         void op_bmi(int);
-        void op_sec();
-        void op_rti();
+        void op_sec(int);
+        void op_rti(int);
         void op_eor(int);
         void op_lsrm(int);
-        void op_pha();
-        void op_lsra();
+        void op_pha(int);
+        void op_lsra(int);
         void op_jmp(int);
         void op_bvc(int);
-        void op_cli();
-        void op_rts();
+        void op_cli(int);
+        void op_rts(int);
         void op_adc(int);
         void op_rorm(int);
-        void op_pla();
-        void op_rora();
+        void op_pla(int);
+        void op_rora(int);
         void op_bvs(int);
-        void op_sei();
+        void op_sei(int);
         void op_sty(int);
         void op_sta(int);
         void op_stx(int);
-        void op_dey();
-        void op_txa();
+        void op_dey(int);
+        void op_txa(int);
         void op_bcc(int);
-        void op_tya();
-        void op_txs();
+        void op_tya(int);
+        void op_txs(int);
         void op_ldy(int);
         void op_lda(int);
         void op_ldx(int);
-        void op_tay();
-        void op_tax();
+        void op_tay(int);
+        void op_tax(int);
         void op_bcs(int);
-        void op_clv();
-        void op_tsx();
+        void op_clv(int);
+        void op_tsx(int);
         void op_cpy(int);
         void op_cmp(int);
         void op_dec(int);
-        void op_iny();
-        void op_dex();
+        void op_iny(int);
+        void op_dex(int);
         void op_bne(int);
-        void op_cld();
+        void op_cld(int);
         void op_cpx(int);
         void op_sbc(int);
         void op_inc(int);
-        void op_inx();
-        void op_nop();
+        void op_inx(int);
+        void op_nop(int);
         void op_beq(int);
-        void op_sed();
+        void op_sed(int);
 
         enum operation {
             BPL,
