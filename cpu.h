@@ -2,6 +2,7 @@
 #include "mem.h"
 #include "apu.h"
 #include <string>
+#include <array>
 
 class cpu {
         typedef int (cpu::*AddrModePtr)();
@@ -36,7 +37,7 @@ public:
         void set_acc(int);
         void set_x(int);
         void print_details(const std::string&);
-	AddrModePtr addrModes[13] = {
+        std::array<AddrModePtr, 13> addrModes = {
 		&cpu::zp_x,
 		&cpu::zp_y,
 		&cpu::ind_x,
@@ -52,7 +53,7 @@ public:
 		&cpu::accum
 	};
 
-	OpPtr operations[60] = {
+        std::array<OpPtr, 60> operations = {
         &cpu::op_bpl,
         &cpu::op_brk,        
         &cpu::op_ora,
