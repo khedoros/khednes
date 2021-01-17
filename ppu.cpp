@@ -504,8 +504,8 @@ int ppu::calc() {
         }
         //Draw the state of the name table
         for(int table = 0; table < 4; ++table) {
-            for(int tile_x = 0; tile_x < 32; ++tile_x) {
-                for(int tile_y = 0; tile_y < 30; ++tile_y) {
+            for(int tile_y = 0; tile_y < 30; ++tile_y) {
+                for(int tile_x = 0; tile_x < 32; ++tile_x) {
                     int val = nt[table][tile_y * 32 + tile_x];
                     int pal = get_nt_pal(table, tile_x, tile_y);
                     //screen.erase_nt(x,y);
@@ -532,7 +532,7 @@ int ppu::calc() {
                             int x = 768+tile_x*8+i;
                             int y = table*128+tile_y*8+j;
                             int col = get_color(table*256+tile_y*16+tile_x,i,j);
-                            int map[] = {74, 64, 67, 71};
+                            int map[] = {64, 65, 66, 67};
                             col = map[col];
                             screen.pset(x, y, col);
                         }
